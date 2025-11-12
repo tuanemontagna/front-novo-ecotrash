@@ -77,8 +77,8 @@ export default function AdminVouchersPage() {
       )}
 
       <div className="bg-white rounded-2xl border border-zinc-200 shadow overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-zinc-50 text-zinc-600">
+        <table className="w-full text-sm text-zinc-800">
+          <thead className="bg-zinc-50 text-zinc-800">
             <tr>
               <th className="text-left font-medium px-4 py-2">ID</th>
               <th className="text-left font-medium px-4 py-2">Parceiro</th>

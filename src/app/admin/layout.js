@@ -10,12 +10,12 @@ export default function AdminLayout({ children }) {
   return (
     <div className="min-h-screen flex bg-white">
       {/* Sidebar (desktop collapsible) */}
-      <div className={`hidden md:block transition-all duration-300 ${open? 'w-64':'w-0'} overflow-hidden`}> 
+      <div className={`hidden md:block transition-all duration-300 ${open? 'w-64':'w-0'} overflow-hidden pt-28`}>
         {open && <AdminSidebar />}
       </div>
       {/* Mobile sidebar overlay */}
       {open && (
-        <div className="md:hidden fixed inset-0 z-40 flex">
+        <div className="md:hidden fixed inset-x-0 top-16 bottom-0 z-40 flex">
           <div className="w-64 bg-white border-r border-zinc-200 shadow-xl">
             <AdminSidebar />
           </div>
@@ -33,7 +33,7 @@ export default function AdminLayout({ children }) {
             onToggleSidebar={() => setOpen(o=>!o)}
           />
         </div>
-        <main className="pt-20 p-4 md:p-6 max-w-7xl w-full mx-auto flex-1 min-h-0">
+        <main className="pt-24 md:pt-28 p-4 md:p-6 max-w-7xl w-full mx-auto flex-1 min-h-0">
           {children}
         </main>
       </div>

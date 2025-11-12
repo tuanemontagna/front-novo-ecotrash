@@ -86,8 +86,8 @@ export default function AdminUsuariosPage() {
       )}
 
       <div className="bg-white rounded-2xl border border-zinc-200 shadow overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-zinc-50 text-zinc-600">
+        <table className="w-full text-sm text-zinc-800">
+          <thead className="bg-zinc-50 text-zinc-800">
             <tr>
               <th className="text-left font-medium px-4 py-2">ID</th>
               <th className="text-left font-medium px-4 py-2">Nome</th>
@@ -140,7 +140,7 @@ export default function AdminUsuariosPage() {
             </div>
             <div>
               <label className="block text-xs font-medium text-[#2d5016] mb-1">Tipo de Usuário</label>
-              <select value={form.tipoUsuario} onChange={e=>setForm(f=>({...f,tipoUsuario:e.target.value}))} className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm">
+              <select value={form.tipoUsuario} onChange={e=>setForm(f=>({...f,tipoUsuario:e.target.value}))} className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm text-zinc-800">
                 <option value="PESSOA_FISICA">PESSOA_FISICA</option>
                 <option value="EMPRESA">EMPRESA</option>
                 <option value="ADMIN">ADMIN</option>

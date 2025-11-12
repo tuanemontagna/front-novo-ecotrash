@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import api from "@/utils/axios";
+import Link from "next/link";
 
 const cards = [
   { key: 'usuarios', title: 'Usuários', path: '/admin/usuarios' },
@@ -10,6 +11,8 @@ const cards = [
   { key: 'vouchers', title: 'Vouchers', path: '/admin/vouchers' },
   { key: 'artigos', title: 'Artigos', path: '/admin/artigos' },
   { key: 'tipos', title: 'Tipos de Resíduo', path: '/admin/tipos-residuo' },
+  { key: 'pontos', title: 'Pontos de Coleta', path: '/admin/pontos-coleta' },
+  { key: 'agendamentos', title: 'Agendamentos', path: '/admin/agendamentos' },
 ];
 
 export default function AdminHome() {
@@ -30,6 +33,25 @@ export default function AdminHome() {
           api.get('/tipos-residuo').catch(()=>({data:{data:[]}})),
         ]);
         if (!ok) return;
+
+        const empresasList = (e?.data?.data||[]);
+        let pontosTotal = 0;
+        let agendamentosTotal = 0;
+        try {
+          if (empresasList.length > 0) {
+            const [pontosArrs, agendsArrs] = await Promise.all([
+              Promise.all(empresasList.map(emp =>
+                api.get(`/empresas/${emp.id}/pontos-coleta`).then(r => (r?.data?.data||[])).catch(()=>[])
+              )),
+              Promise.all(empresasList.map(emp =>
+                api.get(`/empresas/${emp.id}/agendamentos`).then(r => (r?.data?.data||[])).catch(()=>[])
+              )),
+            ]);
+            pontosTotal = pontosArrs.reduce((sum, arr) => sum + (Array.isArray(arr)? arr.length : 0), 0);
+            agendamentosTotal = agendsArrs.reduce((sum, arr) => sum + (Array.isArray(arr)? arr.length : 0), 0);
+          }
+        } catch {}
+
         setCounts({
           usuarios: (u?.data?.data||[]).length,
           empresas: (e?.data?.data||[]).length,
@@ -37,6 +59,8 @@ export default function AdminHome() {
           vouchers: (v?.data?.data||[]).length,
           artigos: (a?.data?.data||[]).length,
           tipos: (t?.data?.data||[]).length,
+          pontos: pontosTotal,
+          agendamentos: agendamentosTotal,
         });
       } finally {
         if (ok) setLoading(false);
@@ -47,18 +71,25 @@ export default function AdminHome() {
 
   return (
     <div>
-      <div className="rounded-3xl bg-gradient-to-r from-emerald-600 to-lime-600 text-white p-6 md:p-8 shadow mb-6">
-        <h1 className="text-2xl md:text-3xl font-semibold">Painel do administrador</h1>
-        <p className="text-white/85 mt-1 text-sm">Gerencie recursos do EcoTrash</p>
+      <div className="mb-6">
+        <h1 className="text-xl md:text-2xl font-semibold text-[#2d5016] tracking-tight">Painel do administrador</h1>
+        <p className="text-zinc-600 mt-1 text-sm">Gerencie recursos do EcoTrash</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map(c => (
-          <a key={c.key} href={c.path} className="block bg-white rounded-2xl border border-zinc-200 shadow p-5 hover:shadow-md transition">
-            <div className="text-zinc-500 text-xs">{c.title}</div>
-            <div className="text-2xl font-semibold text-[#2d5016]">{loading ? '...' : (counts[c.key] ?? 0)}</div>
-            <div className="text-emerald-700 text-sm mt-2 font-medium">Abrir</div>
-          </a>
+          <Link
+            key={c.key}
+            href={c.path}
+            className="group bg-white rounded-2xl shadow-xl border border-zinc-100 p-6 transition transform hover:-translate-y-1 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white active:scale-[0.98]"
+          >
+            <div className="flex flex-col h-full">
+              <div className="text-sm text-zinc-500">{c.title}</div>
+              <div className="mt-1 text-3xl font-semibold text-[#2d5016]">
+                {loading ? '...' : (counts[c.key] === undefined ? '—' : counts[c.key])}
+              </div>
+            </div>
+          </Link>
         ))}
       </div>
     </div>

@@ -24,3 +24,16 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Improve readability of all form controls across the app (admin included) */
+input, textarea, select {
+  /* zinc-800 */
+  color: #27272a;
+}
+input::placeholder,
+textarea::placeholder,
+select::placeholder {
+  /* zinc-600; keep opacity 1 so it isn't washed out */
+  color: #52525b;
+  opacity: 1;
+}
