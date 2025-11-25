@@ -42,7 +42,7 @@ export default function ColetasUsuarioPage() {
 
   function decodeJwtId() {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('accessToken') || localStorage.getItem('token')) : null;
       if (!token) return null;
       const payload = token.split('.')[1];
       const b64 = payload.replace(/-/g, '+').replace(/_/g, '/');
@@ -146,6 +146,7 @@ export default function ColetasUsuarioPage() {
   }
 
   async function cancelarAgendamento(id, statusAtual) {
+    if (!window.confirm("Tem certeza que deseja cancelar esta coleta?")) return;
     try {
       setError("");
       await api.patch(`/agendamentos/${id}/status`, { status: 'CANCELADO' });
@@ -206,10 +207,26 @@ export default function ColetasUsuarioPage() {
     }
   }
 
+  function getStatusBadge(status) {
+    const s = (status || '').toUpperCase();
+    let className = 'bg-zinc-100 text-zinc-800';
+    
+    if (s === 'CONCLUIDO' || s === 'CONCLUÍDA') className = 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+    else if (s === 'CANCELADO' || s === 'REJEITADA') className = 'bg-red-100 text-red-800 border border-red-200';
+    else if (s === 'SOLICITADO') className = 'bg-yellow-100 text-yellow-800 border border-yellow-200';
+    else if (s === 'CONFIRMADA' || s === 'AGENDADA') className = 'bg-blue-100 text-blue-800 border border-blue-200';
+    
+    return (
+      <span className={`text-xs px-3 py-1 rounded-full font-semibold ${className}`}>
+        {status}
+      </span>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <Header />
-      <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-24 pb-12 flex-1">
+      
+      <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-0 pb-12 flex-1">
         <div className="mb-6">
           <h1 className="text-[color:#2d5016] text-2xl md:text-3xl font-semibold">Coletas</h1>
           <p className="text-zinc-600 mt-1 text-sm">Gerencie suas coletas e agende novas</p>
@@ -331,9 +348,7 @@ export default function ColetasUsuarioPage() {
                 <article key={a.id} className="bg-white rounded-2xl shadow border border-zinc-100 p-5">
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-zinc-600">#{a.id}</div>
-                    <span className={`text-xs px-3 py-1 rounded-full font-semibold ${a.status === 'CONCLUIDO' ? 'bg-emerald-500 text-white' : a.status === 'CANCELADO' ? 'bg-zinc-300 text-zinc-700' : 'bg-amber-200 text-amber-800'}`}>
-                      {a.status}
-                    </span>
+                    {getStatusBadge(a.status)}
                   </div>
                   <div className="mt-3 space-y-2 text-sm">
                     <div className="flex items-center gap-2 text-zinc-700"><Building2 size={16} /> {a.empresaResponsavel?.nomeFantasia || `Empresa #${a.empresaId}`}</div>

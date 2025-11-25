@@ -56,7 +56,7 @@ export default function RecompensasPage() {
     let active = true;
     function decodeJwtId() {
       try {
-        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        const token = typeof window !== 'undefined' ? (localStorage.getItem('accessToken') || localStorage.getItem('token')) : null;
         if (!token) return null;
         const payload = token.split('.')[1];
         const b64 = payload.replace(/-/g, '+').replace(/_/g, '/');
@@ -187,10 +187,10 @@ export default function RecompensasPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <Header />
+      
 
       {/* Conteúdo */}
-      <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-24 pb-10 flex-1">
+      <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-0 pb-10 flex-1">
         <div className="mb-6">
           <h1 className="text-[color:#2d5016] text-2xl md:text-3xl font-semibold">Recompensas</h1>
           <p className="text-zinc-600 mt-1 text-sm">Troque seus pontos por benefícios incríveis</p>

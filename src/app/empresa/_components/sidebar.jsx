@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Home, MapPin, House, Sparkles, User2, Menu, ClipboardList } from "lucide-react";
+import { Home, MapPin, House, Sparkles, User2, Menu, ClipboardList, X } from "lucide-react";
 
 const links = [
   { href: "/empresa/home", label: "Início", Icon: Home },
@@ -13,9 +13,9 @@ const links = [
   { href: "/empresa/campanhas", label: "Campanhas", Icon: Sparkles },
 ];
 
-export default function EmpresaSidebar() {
+export default function EmpresaSidebar({ open = true }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const isHome = useMemo(() => pathname === "/empresa/home" || pathname === "/empresa", [pathname]);
   if (isHome) return null;
@@ -44,27 +44,32 @@ export default function EmpresaSidebar() {
   return (
     <>
       {/* Desktop sidebar (persistent) */}
-      <aside className="hidden md:flex md:flex-col fixed top-16 left-0 w-64 h-[calc(100vh-4rem)] bg-white border-r border-zinc-200 shadow-sm z-30">
-        <div className="px-4 py-3 text-xs font-semibold text-[#2d5016]">Menu</div>
+      <aside className={`hidden md:flex md:flex-col fixed top-0 left-0 w-64 h-screen bg-white border-r border-zinc-200 shadow-sm z-50 transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="h-16 flex items-center px-6 border-b border-zinc-100">
+            <span className="font-bold text-[#2d5016] text-lg">EcoTrash</span>
+        </div>
         <NavList />
       </aside>
 
       {/* Mobile toggle button */}
       <button
         aria-label="Abrir menu"
-        onClick={() => setOpen(true)}
-        className="md:hidden fixed z-40 left-4 top-20 inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[linear-gradient(135deg,#48742c_0%,#5d8f3a_100%)] text-white text-sm shadow"
+        onClick={() => setMobileOpen(true)}
+        className="md:hidden fixed z-40 left-4 top-4 inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-[linear-gradient(135deg,#48742c_0%,#5d8f3a_100%)] text-white text-sm shadow"
       >
         <Menu size={16}/> Menu
       </button>
 
       {/* Mobile drawer */}
-      {open && (
+      {mobileOpen && (
         <div className="md:hidden">
-          <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setOpen(false)} />
-          <div className="fixed top-16 left-0 h-[calc(100vh-4rem)] w-72 bg-white border-r border-zinc-200 shadow-xl z-50">
-            <div className="px-4 py-3 text-xs font-semibold text-[#2d5016]">Menu</div>
-            <NavList onNavigate={() => setOpen(false)} />
+          <div className="fixed inset-0 bg-black/40 z-50" onClick={() => setMobileOpen(false)} />
+          <div className="fixed top-0 left-0 h-screen w-72 bg-white border-r border-zinc-200 shadow-xl z-[60]">
+            <div className="h-16 flex items-center justify-between px-4 border-b border-zinc-100">
+              <span className="font-bold text-[#2d5016] text-lg">EcoTrash</span>
+              <button onClick={() => setMobileOpen(false)} className="text-zinc-500"><X size={20}/></button>
+            </div>
+            <NavList onNavigate={() => setMobileOpen(false)} />
           </div>
         </div>
       )}

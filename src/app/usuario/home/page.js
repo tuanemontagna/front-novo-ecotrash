@@ -7,9 +7,8 @@ import { MapPin, House, Newspaper, Award, Leaf, Users, TrendingUp } from "lucide
 export default function UsuarioHomePage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <Header />
-
-      <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-24 pb-16 flex-1">
+      
+      <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-8 pb-16 flex-1">
         {/* Hero */}
         <section className="mb-12">
           <div className="bg-white rounded-2xl border border-zinc-100 shadow-xl overflow-hidden">

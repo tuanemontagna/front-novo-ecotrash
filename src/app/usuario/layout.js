@@ -1,15 +1,37 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import UsuarioSidebar from "./_components/sidebar";
+import Header from "@/components/header";
 
 export default function UsuarioSectionLayout({ children }) {
   const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const isHome = pathname === "/usuario/home" || pathname === "/usuario";
+
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-zinc-50">
-      <UsuarioSidebar />
-      <main className={`${isHome ? "" : "md:ml-64"} px-4 py-8 max-w-7xl mx-auto`}>{children}</main>
+    <div className="min-h-screen bg-zinc-50">
+      <Header 
+        showSidebarToggle={!isHome} 
+        sidebarOpen={sidebarOpen} 
+        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        className={`transition-all duration-300 right-0 ${!isHome && sidebarOpen ? 'left-64' : 'left-0'}`}
+        maxWidthClass={!isHome && sidebarOpen ? "max-w-full" : "max-w-6xl"}
+      />
+      
+      {!isHome && (
+        <UsuarioSidebar open={sidebarOpen} />
+      )}
+
+      <main 
+        className={`
+          pt-24 px-4 pb-8 mx-auto transition-all duration-300
+          ${isHome ? "max-w-6xl" : (sidebarOpen ? "ml-64 max-w-[calc(100vw-16rem)]" : "max-w-6xl")}
+        `}
+      >
+        {children}
+      </main>
     </div>
   );
 }

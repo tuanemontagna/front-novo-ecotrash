@@ -30,7 +30,7 @@ export default function CampanhasUsuarioPage() {
 
   function decodeJwtId() {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('accessToken') || localStorage.getItem('token')) : null;
       if (!token) return null;
       const payload = token.split('.')[1];
       const b64 = payload.replace(/-/g, '+').replace(/_/g, '/');
@@ -128,13 +128,14 @@ export default function CampanhasUsuarioPage() {
   }
 
   async function deixarApoiar(camp) {
+    if (!window.confirm("Tem certeza que deseja deixar de apoiar esta campanha?")) return;
     try {
       setError(""); setSuccess("");
       if (!isAuthed || !userId) {
         setError('Faça login para gerenciar apoio.');
         return;
       }
-      await api.post(`/usuarios/${userId}/deixar-campanha`, { campanhaId: camp.id });
+      await api.delete(`/usuarios/${userId}/deixar-campanha`, { data: { campanhaId: camp.id } });
       setApoios(prev => ({ ...prev, [camp.id]: false }));
       setSuccess('Você deixou de apoiar esta campanha.');
     } catch (e) {
@@ -145,9 +146,8 @@ export default function CampanhasUsuarioPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <Header />
-
-      <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-24 pb-12 flex-1">
+      
+      <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-0 pb-12 flex-1">
         <div className="mb-6">
           <h1 className="text-[color:#2d5016] text-2xl md:text-3xl font-semibold">Campanhas</h1>
           <p className="text-zinc-600 mt-1 text-sm">Encontre campanhas e apoie iniciativas sustentáveis</p>

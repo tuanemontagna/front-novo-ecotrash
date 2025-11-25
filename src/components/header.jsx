@@ -2,32 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { Menu, X } from "lucide-react";
-import api from "@/utils/axios";
+import { useMemo } from "react";
+import { Menu, X, LogOut } from "lucide-react";
+import { useAuth } from "@/providers/auth-provider";
 
-export default function Header({ maxWidthClass = "max-w-6xl", showSidebarToggle = false, sidebarOpen = false, onToggleSidebar }) {
-  const [userName, setUserName] = useState("");
-
-  useEffect(() => {
-    let active = true;
-    async function loadName() {
-      try {
-        const res = await api.get('/usuarios/me');
-        const nome = res?.data?.data?.nome;
-        if (active) setUserName(nome || 'Usuário');
-      } catch {
-        try {
-          const stored = typeof window !== 'undefined' ? localStorage.getItem('userName') : null;
-          if (active) setUserName((stored && stored.trim()) || 'Usuário');
-        } catch {
-          if (active) setUserName('Usuário');
-        }
-      }
-    }
-    loadName();
-    return () => { active = false };
-  }, []);
+export default function Header({ maxWidthClass = "max-w-6xl", showSidebarToggle = false, sidebarOpen = false, onToggleSidebar, className = "" }) {
+  const { user, logout } = useAuth();
+  const userName = user?.nome || user?.razaoSocial || 'Usuário';
 
   const initials = useMemo(() => {
     if (!userName) return "U";
@@ -36,7 +17,7 @@ export default function Header({ maxWidthClass = "max-w-6xl", showSidebarToggle 
   }, [userName]);
 
   return (
-    <div className="fixed top-0 inset-x-0 z-50 shadow-lg bg-[linear-gradient(135deg,#48742c_0%,#3a5e23_100%)]">
+    <div className={`fixed top-0 z-50 shadow-lg bg-[linear-gradient(135deg,#48742c_0%,#3a5e23_100%)] ${className || 'inset-x-0'}`}>
       <div className={`mx-auto w-full ${maxWidthClass} h-16 px-4 md:px-6 flex items-center justify-between`}>
         <div className="flex items-center gap-3 text-white">
           {showSidebarToggle && (
@@ -62,6 +43,13 @@ export default function Header({ maxWidthClass = "max-w-6xl", showSidebarToggle 
           <div className="h-9 w-9 rounded-full bg-white/20 flex items-center justify-center text-white text-sm font-semibold">
             {initials}
           </div>
+          <button 
+            onClick={logout}
+            className="ml-2 p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors text-white"
+            title="Sair"
+          >
+            <LogOut size={18} />
+          </button>
         </div>
       </div>
     </div>

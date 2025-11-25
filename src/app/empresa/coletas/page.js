@@ -15,6 +15,18 @@ function formatBR(dateStr) {
   }
 }
 
+function formatDateTime(dateStr) {
+  if (!dateStr) return "-";
+  try {
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    }).format(new Date(dateStr));
+  } catch {
+    return dateStr;
+  }
+}
+
 export default function EmpresaColetasPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -28,7 +40,7 @@ export default function EmpresaColetasPage() {
 
   function decodeJwtId() {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('accessToken') || localStorage.getItem('token')) : null;
       if (!token) return null;
       const payload = token.split('.')[1];
       const b64 = payload.replace(/-/g, '+').replace(/_/g, '/');
@@ -42,35 +54,17 @@ export default function EmpresaColetasPage() {
     async function load() {
       try {
         setLoading(true); setError("");
-        // resolve user
-        try {
-          const me = await api.get('/usuarios/me');
-          if (me?.data?.data?.id && active) setUserId(me.data.data.id);
-        } catch {
-          const id = decodeJwtId();
-          if (id && active) setUserId(id);
-        }
+        
+        // Buscar empresa do usuário logado
+        const empRes = await api.get('/empresas/me');
+        const empresa = empRes?.data?.data;
+        
+        if (empresa && active) {
+          setEmpresaId(empresa.id);
+          setUserId(empresa.usuarioId);
 
-        // fetch empresas and find one for this user
-        if (active) {
-          const empresasRes = await api.get('/empresas');
-          const empresas = Array.isArray(empresasRes?.data?.data) ? empresasRes.data.data : [];
-          const found = empresas.find(e => Number(e.usuarioId) === Number(userId));
-          // if not found and userId not yet set, try again after userId resolves
-          if (!found && !userId) {
-            // nothing
-          } else if (!found && userId) {
-            // fallback: try to fetch empresa by filtering returned list where usuarioId matches
-            const found2 = empresas.find(e => Number(e.usuarioId) === Number(userId));
-            if (found2 && active) setEmpresaId(found2.id);
-          } else if (found && active) {
-            setEmpresaId(found.id);
-          }
-        }
-
-        // if we already have empresaId (maybe from previous render), load agendamentos
-        if (empresaId) {
-          const res = await api.get(`/empresas/${empresaId}/agendamentos`);
+          // Carregar agendamentos da empresa
+          const res = await api.get(`/empresas/${empresa.id}/agendamentos`);
           const data = Array.isArray(res?.data?.data) ? res.data.data : [];
           if (active) setAgendamentos(data);
         }
@@ -82,7 +76,7 @@ export default function EmpresaColetasPage() {
     }
     load();
     return () => { active = false; };
-  }, [userId, empresaId]);
+  }, []);
 
   // helper to refresh list
   async function refreshList() {
@@ -125,8 +119,8 @@ export default function EmpresaColetasPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <Header />
-      <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-24 pb-16 flex-1">
+      
+      <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-0 pb-16 flex-1">
         <div className="mb-6">
           <h1 className="text-[color:#2d5016] text-2xl md:text-3xl font-semibold">Gestão de Coletas (Empresa)</h1>
           <p className="text-zinc-600 mt-1 text-sm">Gerencie coletas recebidas, aprove solicitações e registre conclusão.</p>
@@ -201,9 +195,53 @@ export default function EmpresaColetasPage() {
                       </div>
 
                       <div className="mt-3 space-y-2 text-sm">
-                        <div className="flex items-center gap-2 text-zinc-700"><Users size={16} /> {item.solicitante?.nome || item.cliente || 'Solicitante'}</div>
-                        {item.dataAgendada && (<div className="flex items-center gap-2 text-zinc-700"><Calendar size={16} /> {formatBR(item.dataAgendada)}</div>)}
-                        <div className="flex items-center gap-2 text-zinc-700"><Clock size={16} /> Solicitado em {formatBR(item.data_solicitacao)}</div>
+                        <div className="flex items-center gap-2 text-zinc-700"><Users size={16} /> <span className="font-medium">Solicitante:</span> {item.solicitante?.nome || item.cliente || 'Solicitante'}</div>
+                        
+                        {item.dataAgendada && (
+                          <div className="flex items-center gap-2 text-zinc-700">
+                            <Calendar size={16} /> 
+                            <span className="font-medium">Agendado para:</span> {formatDateTime(item.dataAgendada)}
+                          </div>
+                        )}
+                        
+                        <div className="flex items-center gap-2 text-zinc-700">
+                          <Clock size={16} /> 
+                          <span className="font-medium">Solicitado em:</span> {formatDateTime(item.data_solicitacao)}
+                        </div>
+
+                        {item.enderecoColeta && (
+                          <div className="flex items-start gap-2 text-zinc-700 pt-2 border-t border-zinc-100 mt-2">
+                            <MapPin size={16} className="mt-0.5" />
+                            <div>
+                              <span className="font-medium block mb-1">Local de Coleta:</span>
+                              <div className="text-xs text-zinc-600 leading-relaxed">
+                                {item.enderecoColeta.logradouro}, {item.enderecoColeta.numero}
+                                {item.enderecoColeta.complemento && ` - ${item.enderecoColeta.complemento}`}
+                                <br />
+                                {item.enderecoColeta.bairro} - {item.enderecoColeta.cidade}/{item.enderecoColeta.estado}
+                                <br />
+                                CEP: {item.enderecoColeta.cep}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {item.itens && item.itens.length > 0 && (
+                          <div className="flex items-start gap-2 text-zinc-700 pt-2 border-t border-zinc-100 mt-2">
+                            <div className="mt-0.5"><Truck size={16} /></div>
+                            <div className="w-full">
+                              <span className="font-medium block mb-1">Itens da Coleta:</span>
+                              <ul className="bg-zinc-50 rounded-lg p-2 space-y-1">
+                                {item.itens.map((i, idx) => (
+                                  <li key={idx} className="flex justify-between text-xs">
+                                    <span>• {i.quantidade}x {i.tipoResiduo?.nome || 'Item'}</span>
+                                    {i.descricao && <span className="text-zinc-500 italic truncate max-w-[150px]">{i.descricao}</span>}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <div className="pt-3 mt-3 border-t border-zinc-200 flex gap-3 justify-end">

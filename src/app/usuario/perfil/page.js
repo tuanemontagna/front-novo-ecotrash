@@ -7,7 +7,7 @@ import { AlertTriangle, CheckCircle2, MapPin, Plus, Pencil, Trash2, Gift, Sparkl
 
 function decodeJwtId() {
   try {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('accessToken') || localStorage.getItem('token')) : null;
     if (!token) return null;
     const payload = token.split('.')[1];
     const b64 = payload.replace(/-/g, '+').replace(/_/g, '/');
@@ -156,8 +156,8 @@ export default function UsuarioPerfilPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <Header />
-      <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-24 pb-16 flex-1">
+      
+      <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-0 pb-16 flex-1">
         <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-semibold text-[#2d5016]">Perfil do Usuário</h1>
@@ -375,8 +375,17 @@ export default function UsuarioPerfilPage() {
                     <input value={formEndereco.cidade} onChange={e=>setFormEndereco(f=>({...f,cidade:e.target.value}))} className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm" />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-[#2d5016] mb-1">Estado</label>
-                    <input value={formEndereco.estado} onChange={e=>setFormEndereco(f=>({...f,estado:e.target.value}))} className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm" />
+                    <label className="block text-xs font-medium text-[#2d5016] mb-1">Estado (UF)</label>
+                    <select 
+                      value={formEndereco.estado} 
+                      onChange={e=>setFormEndereco(f=>({...f,estado:e.target.value}))} 
+                      className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm bg-white"
+                    >
+                      <option value="">Selecione</option>
+                      {['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].map(uf => (
+                        <option key={uf} value={uf}>{uf}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-[#2d5016] mb-1">CEP</label>

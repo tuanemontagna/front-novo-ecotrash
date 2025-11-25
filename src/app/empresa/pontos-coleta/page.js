@@ -3,12 +3,39 @@
 import { useEffect, useMemo, useState } from "react";
 import Header from "@/components/header";
 import api from "@/utils/axios";
-import { Building2, MapPin, Clock, Plus, Pencil, Trash2, Search, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Building2, MapPin, Clock, Plus, Pencil, Trash2, Search, AlertTriangle, CheckCircle2, QrCode } from "lucide-react";
 
 function formatEndereco(e) {
   if (!e) return "";
   const parts = [e.logradouro, e.numero, e.bairro, e.cidade, e.estado, e.cep].filter(Boolean);
   return parts.join(", ");
+}
+
+const COLORS = [
+  'bg-red-100 text-red-800 border-red-200',
+  'bg-orange-100 text-orange-800 border-orange-200',
+  'bg-amber-100 text-amber-800 border-amber-200',
+  'bg-yellow-100 text-yellow-800 border-yellow-200',
+  'bg-lime-100 text-lime-800 border-lime-200',
+  'bg-green-100 text-green-800 border-green-200',
+  'bg-emerald-100 text-emerald-800 border-emerald-200',
+  'bg-teal-100 text-teal-800 border-teal-200',
+  'bg-cyan-100 text-cyan-800 border-cyan-200',
+  'bg-sky-100 text-sky-800 border-sky-200',
+  'bg-blue-100 text-blue-800 border-blue-200',
+  'bg-indigo-100 text-indigo-800 border-indigo-200',
+  'bg-violet-100 text-violet-800 border-violet-200',
+  'bg-purple-100 text-purple-800 border-purple-200',
+  'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200',
+  'bg-pink-100 text-pink-800 border-pink-200',
+  'bg-rose-100 text-rose-800 border-rose-200',
+  'bg-slate-100 text-slate-800 border-slate-200',
+  'bg-stone-100 text-stone-800 border-stone-200',
+];
+
+function getResiduoColor(id) {
+  if (!id) return `border ${COLORS[0]}`;
+  return `border ${COLORS[id % COLORS.length]}`;
 }
 
 export default function PontosColetaEmpresaPage() {
@@ -19,17 +46,20 @@ export default function PontosColetaEmpresaPage() {
   const [userId, setUserId] = useState(null);
   const [empresaId, setEmpresaId] = useState(null);
   const [pontos, setPontos] = useState([]);
+  const [tiposResiduo, setTiposResiduo] = useState([]);
   const [q, setQ] = useState("");
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null); // ponto sendo editado
   const [saving, setSaving] = useState(false);
   const [confirmDel, setConfirmDel] = useState(null);
+  const [viewCode, setViewCode] = useState(null); // ponto para ver código
 
   const [form, setForm] = useState({
     nomePonto: "",
     horarioFuncionamento: "",
     ativo: true,
+    itensAceitos: [], // IDs dos tipos de resíduo
     endereco: {
       cep: "",
       logradouro: "",
@@ -43,7 +73,7 @@ export default function PontosColetaEmpresaPage() {
 
   function decodeJwtId() {
     try {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const token = typeof window !== 'undefined' ? (localStorage.getItem('accessToken') || localStorage.getItem('token')) : null;
       if (!token) return null;
       const payload = token.split('.')[1];
       const b64 = payload.replace(/-/g, '+').replace(/_/g, '/');
@@ -57,28 +87,30 @@ export default function PontosColetaEmpresaPage() {
     async function load() {
       try {
         setLoading(true); setError("");
-        // resolve user
-        try {
-          const me = await api.get('/usuarios/me');
-          if (me?.data?.data?.id && active) setUserId(me.data.data.id);
-        } catch {
-          const id = decodeJwtId();
-          if (id && active) setUserId(id);
+        
+        // Buscar empresa do usuário logado
+        const empRes = await api.get('/empresas/me');
+        const empresa = empRes?.data?.data;
+
+        if (empresa && active) {
+          setEmpresaId(empresa.id);
+          setUserId(empresa.usuarioId);
         }
-        // resolve empresaId
-        const resEmp = await api.get('/empresas');
-        const empresas = Array.isArray(resEmp?.data?.data) ? resEmp.data.data : [];
-        const found = empresas.find(e => Number(e.usuarioId) === Number(userId));
-        if (found && active) setEmpresaId(found.id);
+
+        // Buscar tipos de resíduo
+        const tiposRes = await api.get('/tipos-residuo');
+        if (active) {
+          setTiposResiduo(Array.isArray(tiposRes?.data?.data) ? tiposRes.data.data : []);
+        }
       } catch (e) {
-        if (active) setError('Não foi possível carregar seus pontos de coleta.');
+        if (active) setError('Não foi possível carregar seus dados de empresa.');
       } finally {
         if (active) setLoading(false);
       }
     }
     load();
     return () => { active = false; };
-  }, [userId]);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -109,6 +141,7 @@ export default function PontosColetaEmpresaPage() {
       nomePonto: "",
       horarioFuncionamento: "",
       ativo: true,
+      itensAceitos: [],
       endereco: { cep: "", logradouro: "", numero: "", complemento: "", bairro: "", cidade: "", estado: "" }
     });
     setModalOpen(true);
@@ -119,6 +152,7 @@ export default function PontosColetaEmpresaPage() {
       nomePonto: p.nomePonto || "",
       horarioFuncionamento: p.horarioFuncionamento || "",
       ativo: p.ativo !== false,
+      itensAceitos: p.tiposResiduosAceitos ? p.tiposResiduosAceitos.map(t => t.id) : [],
       endereco: {
         cep: p.endereco?.cep || "",
         logradouro: p.endereco?.logradouro || "",
@@ -130,6 +164,17 @@ export default function PontosColetaEmpresaPage() {
       }
     });
     setModalOpen(true);
+  }
+
+  function toggleTipoResiduo(id) {
+    setForm(prev => {
+      const current = prev.itensAceitos || [];
+      if (current.includes(id)) {
+        return { ...prev, itensAceitos: current.filter(x => x !== id) };
+      } else {
+        return { ...prev, itensAceitos: [...current, id] };
+      }
+    });
   }
 
   async function savePoint(e) {
@@ -175,10 +220,25 @@ export default function PontosColetaEmpresaPage() {
     }
   }
 
+  async function fetchDailyCode(ponto) {
+    try {
+      setError("");
+      const res = await api.get(`/empresas/${empresaId}/pontos-coleta/${ponto.id}/codigo-diario`);
+      const codeData = res?.data?.data;
+      if (codeData) {
+        setViewCode({ ponto, code: codeData.codigo, points: codeData.pontosValor });
+      } else {
+        alert("Código não encontrado para hoje.");
+      }
+    } catch (e) {
+      alert(e?.response?.data?.message || "Erro ao buscar código diário.");
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <Header />
-      <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-24 pb-12 flex-1">
+      
+      <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-0 pb-12 flex-1">
         <div className="mb-6 flex items-center justify-between gap-3">
           <div>
             <h1 className="text-[color:#2d5016] text-2xl md:text-3xl font-semibold">Meus pontos de coleta</h1>
@@ -230,7 +290,17 @@ export default function PontosColetaEmpresaPage() {
                   {p.horarioFuncionamento && (
                     <div className="text-sm text-zinc-700 flex items-center gap-2"><Clock size={16}/> {p.horarioFuncionamento}</div>
                   )}
+                  {p.tiposResiduosAceitos && p.tiposResiduosAceitos.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {p.tiposResiduosAceitos.map(t => (
+                        <span key={t.id} className={`text-xs px-2 py-1 rounded-full font-medium ${getResiduoColor(t.id)}`}>
+                          {t.nome}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <div className="pt-2 flex gap-2 justify-end">
+                    <button onClick={()=>fetchDailyCode(p)} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-emerald-300 text-emerald-700 text-sm font-bold hover:bg-emerald-50" title="Ver código do dia"><QrCode size={16}/> Código</button>
                     <button onClick={()=>openEdit(p)} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-300 text-zinc-700 text-sm font-bold hover:bg-zinc-50"><Pencil size={16}/> Editar</button>
                     <button onClick={()=>setConfirmDel(p)} className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-red-300 text-red-700 text-sm font-bold hover:bg-red-50"><Trash2 size={16}/> Excluir</button>
                   </div>
@@ -263,6 +333,24 @@ export default function PontosColetaEmpresaPage() {
               <div>
                 <label className="block text-sm font-medium text-[#2d5016] mb-1">Horário de funcionamento</label>
                 <input value={form.horarioFuncionamento} onChange={e=>setForm(f=>({...f, horarioFuncionamento:e.target.value}))} className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Ex.: Seg a Sex, 9h às 18h" />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#2d5016] mb-2">Itens aceitos</label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto border rounded-lg p-2">
+                  {tiposResiduo.map(t => (
+                    <label key={t.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-zinc-50 p-1 rounded text-zinc-800">
+                      <input 
+                        type="checkbox" 
+                        checked={form.itensAceitos?.includes(t.id)} 
+                        onChange={() => toggleTipoResiduo(t.id)}
+                        className="rounded text-emerald-600 focus:ring-emerald-500"
+                      />
+                      <span className="truncate" title={t.nome}>{t.nome}</span>
+                    </label>
+                  ))}
+                </div>
+                {tiposResiduo.length === 0 && <p className="text-xs text-zinc-500 mt-1">Nenhum tipo de resíduo cadastrado no sistema.</p>}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -301,6 +389,40 @@ export default function PontosColetaEmpresaPage() {
                 <button disabled={saving} type="submit" className={`px-4 py-2 rounded-lg text-white font-bold ${saving ? 'bg-zinc-400' : 'bg-[linear-gradient(135deg,#48742c_0%,#5d8f3a_100%)] shadow'}`}>{saving ? 'Salvando...' : (editing ? 'Salvar alterações' : 'Criar ponto')}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* View Code Modal */}
+      {viewCode && (
+        <div className="fixed inset-0 z-[70] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden transform transition-all scale-100">
+            <div className="bg-[linear-gradient(135deg,#48742c_0%,#5d8f3a_100%)] p-6 text-center relative">
+              <button onClick={()=>setViewCode(null)} className="absolute top-4 right-4 text-white/80 hover:text-white">✕</button>
+              <h3 className="text-white font-bold text-lg mb-1">Código do Dia</h3>
+              <p className="text-emerald-100 text-sm">{viewCode.ponto.nomePonto}</p>
+            </div>
+            <div className="p-8 flex flex-col items-center space-y-6">
+              <div className="text-center space-y-2">
+                <span className="text-zinc-500 text-xs uppercase tracking-wider font-semibold">Código de Validação</span>
+                <div className="text-4xl font-mono font-bold text-zinc-800 tracking-widest border-2 border-dashed border-zinc-300 px-6 py-3 rounded-xl bg-zinc-50">
+                  {viewCode.code}
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 bg-emerald-50 text-emerald-800 px-4 py-2 rounded-full text-sm font-medium">
+                <CheckCircle2 size={16} />
+                Vale {viewCode.points} pontos
+              </div>
+
+              <p className="text-center text-xs text-zinc-500 max-w-[200px]">
+                Forneça este código aos usuários que realizarem o descarte correto hoje.
+              </p>
+
+              <button onClick={()=>setViewCode(null)} className="w-full py-3 rounded-xl bg-zinc-100 text-zinc-700 font-bold hover:bg-zinc-200 transition">
+                Fechar
+              </button>
+            </div>
           </div>
         </div>
       )}

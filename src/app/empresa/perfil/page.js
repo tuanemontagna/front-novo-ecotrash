@@ -7,7 +7,7 @@ import { Building2, MapPin, AlertTriangle, CheckCircle2, Pencil, Trash2, Plus, L
 
 function decodeJwtId() {
   try {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('accessToken') || localStorage.getItem('token')) : null;
     if (!token) return null;
     const payload = token.split('.')[1];
     const b64 = payload.replace(/-/g, '+').replace(/_/g, '/');
@@ -43,31 +43,25 @@ export default function EmpresaPerfilPage() {
   async function loadAll() {
     try {
       setLoading(true); setError("");
-      // resolve usuario base
-      let userId;
+      
+      // carregar empresa do usuário logado
       try {
-        const me = await api.get('/usuarios/me');
-        if (me?.data?.data?.id) {
-          userId = me.data.data.id;
-          setUsuario(me.data.data);
-        }
-      } catch {
-        userId = decodeJwtId();
-      }
-      // carregar lista completa de empresas e achar vinculada ao usuario
-      if (userId) {
-        const empRes = await api.get('/empresas');
-        const lista = Array.isArray(empRes?.data?.data) ? empRes.data.data : [];
-        const found = lista.find(e => Number(e.usuarioId) === Number(userId));
-        if (found) {
-          // buscar empresa completa
-          const det = await api.get(`/empresas/${found.id}`);
-          const data = det?.data?.data || found;
+        const empRes = await api.get('/empresas/me');
+        const data = empRes?.data?.data;
+        if (data) {
           setEmpresa(data);
+          setUsuario(data.usuario); // A rota /me já retorna o usuário incluído
           setTiposResiduos(Array.isArray(data.tiposResiduosAceitos) ? data.tiposResiduosAceitos : []);
           setCampanhas(Array.isArray(data.campanhas) ? data.campanhas : []);
         }
+      } catch (e) {
+        // Se falhar ao buscar empresa, tenta buscar usuário para mostrar algo
+        try {
+          const me = await api.get('/usuarios/me');
+          if (me?.data?.data) setUsuario(me.data.data);
+        } catch {}
       }
+
       // carregar opções disponíveis para associação
       try {
         const tiposRes = await api.get('/tipos-residuo');
@@ -126,8 +120,8 @@ export default function EmpresaPerfilPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <Header />
-      <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-24 pb-16 flex-1">
+      
+      <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-0 pb-16 flex-1">
         <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-semibold text-[#2d5016]">Perfil da Empresa</h1>

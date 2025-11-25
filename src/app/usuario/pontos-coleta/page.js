@@ -77,8 +77,8 @@ export default function PontosColetaUsuarioPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <Header />
-      <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-24 pb-12 flex-1">
+      
+      <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-0 pb-12 flex-1">
         <div className="mb-6">
           <h1 className="text-[color:#2d5016] text-2xl md:text-3xl font-semibold">Pontos de coleta</h1>
           <p className="text-zinc-600 mt-1 text-sm">Encontre locais próximos para descartar seus resíduos</p>

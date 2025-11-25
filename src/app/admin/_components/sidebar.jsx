@@ -13,6 +13,7 @@ const links = [
   { href: "/admin/artigos", label: "Artigos", icon: FileText },
   { href: "/admin/tipos-residuo", label: "Tipos de Resíduo", icon: Recycle },
   { href: "/admin/pontos-coleta", label: "Pontos de Coleta", icon: MapPin },
+  { href: "/admin/enderecos", label: "Endereços", icon: MapPin },
   { href: "/admin/agendamentos", label: "Agendamentos", icon: CalendarClock },
 ];
 
