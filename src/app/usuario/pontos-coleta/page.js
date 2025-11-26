@@ -3,7 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import Header from "@/components/header";
 import api from "@/utils/axios";
-import { MapPin, Building2, Search, Clock, AlertTriangle, Navigation } from "lucide-react";
+import { MapPin, Building2, Search, Clock, AlertTriangle, Navigation, List, Map as MapIcon, Recycle } from "lucide-react";
+import dynamic from "next/dynamic";
+
+const Map = dynamic(() => import("@/components/Map"), { 
+  ssr: false,
+  loading: () => <div className="h-full w-full bg-zinc-100 animate-pulse rounded-2xl flex items-center justify-center text-zinc-400">Carregando mapa...</div>
+});
 
 function formatEndereco(e) {
   if (!e) return "";
@@ -25,6 +31,7 @@ export default function PontosColetaUsuarioPage() {
   const [q, setQ] = useState("");
   const [cidade, setCidade] = useState("");
   const [somenteAtivos, setSomenteAtivos] = useState(true);
+  const [viewMode, setViewMode] = useState("map"); // 'list' | 'map'
 
   useEffect(() => {
     let active = true;
@@ -79,9 +86,25 @@ export default function PontosColetaUsuarioPage() {
     <div className="min-h-screen bg-white flex flex-col">
       
       <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-0 pb-12 flex-1">
-        <div className="mb-6">
-          <h1 className="text-[color:#2d5016] text-2xl md:text-3xl font-semibold">Pontos de coleta</h1>
-          <p className="text-zinc-600 mt-1 text-sm">Encontre locais próximos para descartar seus resíduos</p>
+        <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h1 className="text-[color:#2d5016] text-2xl md:text-3xl font-semibold">Pontos de coleta</h1>
+            <p className="text-zinc-600 mt-1 text-sm">Encontre locais próximos para descartar seus resíduos</p>
+          </div>
+          <div className="flex bg-zinc-100 p-1 rounded-lg">
+            <button
+              onClick={() => setViewMode("list")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition ${viewMode === 'list' ? 'bg-white text-[#2d5016] shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
+            >
+              <List size={18} /> Lista
+            </button>
+            <button
+              onClick={() => setViewMode("map")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition ${viewMode === 'map' ? 'bg-white text-[#2d5016] shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
+            >
+              <MapIcon size={18} /> Mapa
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -91,30 +114,32 @@ export default function PontosColetaUsuarioPage() {
         )}
 
         {/* Filtros */}
-        <section className="bg-white rounded-2xl shadow-xl border border-zinc-100 p-4 md:p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-[#2d5016] mb-1">Buscar</label>
-              <div className="flex items-center gap-2 border rounded-lg px-3 py-2">
-                <Search size={16} className="text-zinc-500" />
-                <input value={q} onChange={(e)=>setQ(e.target.value)} placeholder="Nome, empresa ou endereço" className="flex-1 outline-none text-sm" />
+        {viewMode === 'list' && (
+          <section className="bg-white rounded-2xl shadow-xl border border-zinc-100 p-4 md:p-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-[#2d5016] mb-1">Buscar</label>
+                <div className="flex items-center gap-2 border rounded-lg px-3 py-2">
+                  <Search size={16} className="text-zinc-500" />
+                  <input value={q} onChange={(e)=>setQ(e.target.value)} placeholder="Nome, empresa ou endereço" className="flex-1 outline-none text-sm" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#2d5016] mb-1">Cidade</label>
+                <select value={cidade} onChange={(e)=>setCidade(e.target.value)} className="w-full border rounded-lg px-3 py-2 text-sm">
+                  <option value="">Todas</option>
+                  {cidades.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <input id="somenteAtivos" type="checkbox" checked={somenteAtivos} onChange={(e)=>setSomenteAtivos(e.target.checked)} />
+                <label htmlFor="somenteAtivos" className="text-sm text-zinc-700">Somente ativos</label>
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-[#2d5016] mb-1">Cidade</label>
-              <select value={cidade} onChange={(e)=>setCidade(e.target.value)} className="w-full border rounded-lg px-3 py-2 text-sm">
-                <option value="">Todas</option>
-                {cidades.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <input id="somenteAtivos" type="checkbox" checked={somenteAtivos} onChange={(e)=>setSomenteAtivos(e.target.checked)} />
-              <label htmlFor="somenteAtivos" className="text-sm text-zinc-700">Somente ativos</label>
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
 
-        {/* Lista */}
+        {/* Lista ou Mapa */}
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -123,6 +148,10 @@ export default function PontosColetaUsuarioPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="bg-white rounded-2xl p-8 text-center text-zinc-600 shadow">Nenhum ponto de coleta encontrado.</div>
+        ) : viewMode === 'map' ? (
+          <div className="h-[600px] w-full bg-zinc-100 rounded-2xl overflow-hidden shadow-inner border border-zinc-200">
+             <Map pontos={filtered} />
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filtered.map(p => (
@@ -136,6 +165,18 @@ export default function PontosColetaUsuarioPage() {
                   <div className="text-sm text-zinc-700 flex items-start gap-2"><MapPin size={16} className="mt-0.5"/>{formatEndereco(p.endereco)}</div>
                   {p.horarioFuncionamento && (
                     <div className="text-sm text-zinc-700 flex items-center gap-2"><Clock size={16}/> {p.horarioFuncionamento}</div>
+                  )}
+                  {p.tiposResiduosAceitos && p.tiposResiduosAceitos.length > 0 && (
+                    <div className="flex items-start gap-2 text-sm text-zinc-700">
+                      <Recycle size={16} className="mt-0.5 shrink-0" />
+                      <div className="flex flex-wrap gap-1">
+                        {p.tiposResiduosAceitos.map(t => (
+                          <span key={t.id} className="bg-green-50 text-green-800 px-1.5 py-0.5 rounded border border-green-100 text-xs">
+                            {t.nome}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   )}
                   <div className="pt-2 flex gap-2">
                     <a href={mapLink(p.endereco)} target="_blank" className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-bold border border-zinc-300 text-zinc-700 hover:bg-zinc-50"><Navigation size={16}/> Ver no mapa</a>

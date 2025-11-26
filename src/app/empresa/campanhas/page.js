@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Header from "@/components/header";
 import api from "@/utils/axios";
-import { Gift, Search, CheckCircle2, AlertTriangle } from "lucide-react";
+import Link from "next/link";
+import { CalendarDays, Gift, Search, CheckCircle2, AlertTriangle, Users, Building2, BarChart3, ArrowRight } from "lucide-react";
 
 function formatBR(dateStr) {
   if (!dateStr) return "-";
@@ -133,7 +134,14 @@ export default function EmpresaCampanhasPage() {
       });
     }
     return items;
-  }, [campanhas, q, onlyAtivas, onlyVigentes, minPontos]);
+  }, [campanhas, q, onlyAtivas, onlyVigentes, minPontos, onlyMine, associadas]);
+
+  const stats = useMemo(() => {
+    const totalCampanhas = campanhas.filter(c => c.ativa !== false).length;
+    const totalApoiadores = campanhas.reduce((acc, c) => acc + (c.totalApoiadores || 0), 0);
+    const totalEmpresas = campanhas.reduce((acc, c) => acc + (c.totalEmpresas || 0), 0);
+    return { totalCampanhas, totalApoiadores, totalEmpresas };
+  }, [campanhas]);
 
   async function participar(camp) {
     try {
@@ -177,6 +185,37 @@ export default function EmpresaCampanhasPage() {
           </div>
         </div>
 
+        {/* Dashboard */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 flex items-center gap-4">
+            <div className="h-12 w-12 rounded-full bg-green-100 text-[#48742c] flex items-center justify-center">
+              <BarChart3 size={24} />
+            </div>
+            <div>
+              <p className="text-sm text-zinc-500 font-medium">Campanhas Ativas</p>
+              <p className="text-2xl font-bold text-zinc-900">{stats.totalCampanhas}</p>
+            </div>
+          </div>
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 flex items-center gap-4">
+            <div className="h-12 w-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+              <Users size={24} />
+            </div>
+            <div>
+              <p className="text-sm text-zinc-500 font-medium">Apoiadores</p>
+              <p className="text-2xl font-bold text-zinc-900">{stats.totalApoiadores}</p>
+            </div>
+          </div>
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-zinc-100 flex items-center gap-4">
+            <div className="h-12 w-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+              <Building2 size={24} />
+            </div>
+            <div>
+              <p className="text-sm text-zinc-500 font-medium">Empresas Participantes</p>
+              <p className="text-2xl font-bold text-zinc-900">{stats.totalEmpresas}</p>
+            </div>
+          </div>
+        </section>
+
         {/* Avisos de contexto */}
         {tipoUsuario && tipoUsuario !== 'EMPRESA' && (
           <div className="mb-6 rounded-2xl p-4 border-2 shadow-xl border-amber-200 text-amber-800 text-sm">
@@ -200,35 +239,6 @@ export default function EmpresaCampanhasPage() {
           </div>
         )}
 
-        {/* Filtros */}
-        <section className="bg-white rounded-2xl shadow-xl border border-zinc-100 p-4 md:p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-[#2d5016] mb-1">Buscar</label>
-              <div className="flex items-center gap-2 border rounded-lg px-3 py-2">
-                <Search size={16} className="text-zinc-500" />
-                <input value={q} onChange={(e)=>setQ(e.target.value)} placeholder="Título ou descrição" className="flex-1 outline-none text-sm" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#2d5016] mb-1">Pontos mínimos</label>
-              <input type="number" min={0} value={minPontos} onChange={(e)=>setMinPontos(Number(e.target.value||0))} className="w-full border rounded-lg px-3 py-2 text-sm" />
-            </div>
-            <div className="flex items-center gap-2">
-              <input id="onlyAtivas" type="checkbox" checked={onlyAtivas} onChange={(e)=>setOnlyAtivas(e.target.checked)} />
-              <label htmlFor="onlyAtivas" className="text-sm text-zinc-700">Somente ativas</label>
-            </div>
-            <div className="flex items-center gap-2">
-              <input id="onlyVigentes" type="checkbox" checked={onlyVigentes} onChange={(e)=>setOnlyVigentes(e.target.checked)} />
-              <label htmlFor="onlyVigentes" className="text-sm text-zinc-700">Somente vigentes</label>
-            </div>
-            <div className="flex items-center gap-2 md:col-span-5">
-              <input id="onlyMine" type="checkbox" checked={onlyMine} onChange={(e)=>setOnlyMine(e.target.checked)} />
-              <label htmlFor="onlyMine" className="text-sm text-zinc-700">Somente minhas (onde a empresa já participa)</label>
-            </div>
-          </div>
-        </section>
-
         {/* Lista de campanhas */}
         <section>
           {loading ? (
@@ -251,10 +261,12 @@ export default function EmpresaCampanhasPage() {
                       <div className="flex items-center justify-between">
                         <span className={`text-xs font-semibold px-2 py-1 rounded-full ${ativa ? 'bg-emerald-500 text-white' : 'bg-zinc-300 text-zinc-700'}`}>{ativa ? 'Ativa' : 'Inativa'}</span>
                         {pontos > 0 && (
-                          <span className="inline-flex items-center gap-1 text-[#48742c] text-xs font-semibold"><Gift size={14}/> +{pontos} pts aos apoiadores</span>
+                          <span className="inline-flex items-center gap-1 text-[#48742c] text-xs font-semibold"><Gift size={14}/> +{pontos} pts</span>
                         )}
                       </div>
-                      <h3 className="text-[#2d5016] font-semibold leading-snug line-clamp-2">{c.titulo}</h3>
+                      <Link href={`/empresa/campanhas/${c.id}`} className="block group">
+                        <h3 className="text-[#2d5016] font-semibold leading-snug line-clamp-2 group-hover:underline">{c.titulo}</h3>
+                      </Link>
                       {c.descricao && (
                         <p className="text-sm text-zinc-600 line-clamp-3">{c.descricao}</p>
                       )}
@@ -262,7 +274,24 @@ export default function EmpresaCampanhasPage() {
                         <span>Início: {formatBR(c.dataInicio)}</span>
                         <span>Fim: {formatBR(c.dataFim)}</span>
                       </div>
+                      <div className="flex items-center gap-4 py-2 border-t border-zinc-100 mt-2">
+                        <div className="flex items-center gap-1.5 text-xs text-zinc-600" title="Apoiadores">
+                          <Users size={14} className="text-blue-500" />
+                          <span className="font-medium">{c.totalApoiadores || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-zinc-600" title="Empresas Participantes">
+                          <Building2 size={14} className="text-amber-500" />
+                          <span className="font-medium">{c.totalEmpresas || 0}</span>
+                        </div>
+                      </div>
                       <div className="flex gap-2">
+                        <Link 
+                          href={`/empresa/campanhas/${c.id}`}
+                          className="flex items-center justify-center px-4 py-2 rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:text-[#2d5016] transition"
+                          title="Ver detalhes"
+                        >
+                          <ArrowRight size={18} />
+                        </Link>
                         <button
                           type="button"
                           disabled={!ativa || ligada || !empresaId || joiningId===c.id}

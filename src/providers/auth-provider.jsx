@@ -38,8 +38,11 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (loading) return;
 
-    const publicRoutes = ['/', '/login', '/criar-conta', '/recuperar-senha', '/artigos'];
+    const publicRoutes = ['/', '/login', '/criar-conta', '/recuperar-senha', '/artigos', '/usuario/campanhas', '/usuario/pontos-coleta'];
+    const guestRoutes = ['/login', '/criar-conta', '/recuperar-senha'];
+
     const isPublic = publicRoutes.some(route => pathname === route || pathname.startsWith(route + '/'));
+    const isGuest = guestRoutes.some(route => pathname === route || pathname.startsWith(route + '/'));
     
     if (!user) {
       if (!isPublic) {
@@ -47,11 +50,11 @@ export function AuthProvider({ children }) {
       }
     } else {
       // User is logged in
-      if (isPublic) {
-        // Redirect to dashboard if on public page
+      if (isGuest) {
+        // Redirect to dashboard if on guest-only page
         redirectUser(user);
-      } else {
-        // Check role access
+      } else if (!isPublic) {
+        // Check role access for protected routes
         if (pathname.startsWith('/admin') && user.tipoUsuario !== 'ADMIN') {
           redirectUser(user);
         } else if (pathname.startsWith('/empresa') && user.tipoUsuario !== 'EMPRESA') {

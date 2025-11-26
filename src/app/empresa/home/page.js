@@ -1,150 +1,167 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import Header from "@/components/header";
-import { MapPin, Truck, Newspaper, Briefcase, BarChart3, Leaf } from "lucide-react";
+import api from "@/utils/axios";
+import { MapPin, Truck, Leaf, ArrowRight, Building2, AlertCircle, BarChart3, BookOpen } from "lucide-react";
 
 export default function EmpresaHomePage() {
+  const [empresa, setEmpresa] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ pontos: 0, coletas: 0, campanhas: 0 });
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const meRes = await api.get('/usuarios/me');
+        const userId = meRes.data.data.id;
+
+        const empRes = await api.get('/empresas');
+        const empresas = Array.isArray(empRes.data.data) ? empRes.data.data : [];
+        const myEmpresa = empresas.find(e => Number(e.usuarioId) === Number(userId));
+
+        if (myEmpresa) {
+            setEmpresa(myEmpresa);
+            
+            try {
+                const pontosRes = await api.get(`/empresas/${myEmpresa.id}/pontos-coleta`);
+                const pontos = Array.isArray(pontosRes.data.data) ? pontosRes.data.data : [];
+                setStats(prev => ({ ...prev, pontos: pontos.length }));
+            } catch {}
+
+            try {
+                const campRes = await api.get(`/empresas/${myEmpresa.id}`);
+                const camps = campRes.data.data.campanhas || [];
+                setStats(prev => ({ ...prev, campanhas: camps.length }));
+            } catch {}
+        }
+
+      } catch (e) {
+        console.error("Erro ao carregar dashboard empresa", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  if (loading) return <div className="min-h-screen bg-zinc-50 flex items-center justify-center text-zinc-500">Carregando...</div>;
+
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      
-      <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-8 pb-16 flex-1">
-        {/* Hero */}
-        <section className="mb-12">
-          <div className="bg-white rounded-2xl border border-zinc-100 shadow-xl overflow-hidden">
-            <div className="p-8 md:p-10">
-              <h1 className="text-2xl md:text-3xl font-semibold text-[color:#2d5016]">
-                Gestão inteligente de resíduos empresariais
-              </h1>
-              <p className="mt-2 text-zinc-600 max-w-2xl">
-                Plataforma corporativa para gestão eficiente de coletas, análise de impacto e relatórios de sustentabilidade.
-              </p>
+    <div className="min-h-screen bg-zinc-50/30 pb-20">
+      <main className="container mx-auto max-w-5xl px-4 py-8 md:py-12">
+        
+        {/* 1. Header / Status */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+            <div>
+                <h1 className="text-3xl font-bold text-zinc-800 mb-1">
+                    {empresa ? empresa.nomeFantasia : 'Painel Empresarial'}
+                </h1>
+                <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <span className="text-sm text-zinc-500 font-medium">Sistema Operacional</span>
+                </div>
             </div>
-          </div>
-        </section>
+            
+            {!empresa && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl flex items-center gap-3 text-sm">
+                    <AlertCircle size={18} />
+                    <span>Complete seu cadastro empresarial para acessar todas as funções.</span>
+                </div>
+            )}
+        </div>
 
-        {/* Ações principais */}
-        <section className="mb-16">
-          <div className="flex items-center gap-2 mb-6">
-            <h2 className="text-xl md:text-2xl font-semibold text-[#2d5016]">Painel de Gestão Empresarial</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <HomeCard
-              href="/empresa/pontos-coleta"
-              title="Meus Pontos de Coleta"
-              description="Encontre pontos de coleta corporativos para descarte responsável"
-              Icon={MapPin}
+        {/* 2. Management Grid (Big Cards) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+            <ManagementCard 
+                href="/empresa/pontos-coleta"
+                icon={MapPin}
+                title="Gerenciar Pontos"
+                desc="Adicione ou edite seus pontos de coleta"
+                stat={stats.pontos}
+                statLabel="Pontos Ativos"
+                colorClass="bg-blue-50 text-blue-600"
             />
-            <HomeCard
-              href="/empresa/coletas"
-              title="Gerenciar Coletas"
-              description="Agende, acompanhe e gerencie as coletas da empresa"
-              Icon={Truck}
+            <ManagementCard 
+                href="/empresa/coletas"
+                icon={Truck}
+                title="Gerenciar Coletas"
+                desc="Acompanhe solicitações e agendamentos"
+                stat={stats.coletas}
+                statLabel="Coletas Totais"
+                colorClass="bg-indigo-50 text-indigo-600"
             />
-            <HomeCard
-              href="/information"
-              title="Informações"
-              description="Acesse guias e conteúdos sobre gestão sustentável empresarial"
-              Icon={Newspaper}
-            />
-          </div>
-        </section>
+        </div>
 
-        {/* Sobre EcoTrash Empresarial */}
-        <section className="mb-16">
-          <div className="text-center mb-8">
-            <h2 className="text-xl md:text-2xl font-semibold text-[#2d5016]">EcoTrash Empresarial</h2>
-            <p className="text-zinc-600 mt-2 max-w-3xl mx-auto">
-              Solução completa para empresas que buscam excelência em gestão de resíduos eletrônicos, compliance ambiental e otimização de processos sustentáveis.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <PillarCard
-              title="Gestão Corporativa"
-              description="Ferramentas para controle de processos de coleta e descarte de resíduos empresariais."
-              Icon={Briefcase}
-            />
-            <PillarCard
-              title="Análise e Relatórios"
-              description="Relatórios de impacto ambiental, métricas de sustentabilidade e dashboards executivos."
-              Icon={BarChart3}
-            />
-            <PillarCard
-              title="Compliance Ambiental"
-              description="Conformidade com regulamentações ambientais e certificações de sustentabilidade."
-              Icon={Leaf}
-            />
-          </div>
-        </section>
+        {/* 3. Secondary Actions & Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Campaign Card */}
+            <Link href="/empresa/campanhas" className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm hover:shadow-md transition group">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <Leaf size={24} />
+                    </div>
+                    <ArrowRight size={20} className="text-zinc-300 group-hover:text-emerald-600 transition" />
+                </div>
+                <h3 className="font-bold text-lg text-zinc-800 mb-1">Campanhas</h3>
+                <p className="text-sm text-zinc-500 mb-4">Participe de ações sustentáveis</p>
+                <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 bg-zinc-50 px-3 py-1.5 rounded-lg w-fit">
+                    <span>{stats.campanhas}</span>
+                    <span className="text-zinc-400">Ativas</span>
+                </div>
+            </Link>
 
-        {/* Impacto */}
-        <section className="mb-16">
-          <div className="bg-white rounded-2xl border border-zinc-100 shadow-xl p-6 md:p-8">
-            <h2 className="text-xl md:text-2xl font-semibold text-[#2d5016] text-center">Resultados Empresariais</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-6">
-              <ImpactStat value="50+" label="Empresas Ativas" />
-              <ImpactStat value="25K+" label="Equipamentos Processados" />
-              <ImpactStat value="95%" label="Taxa de Reciclagem" />
-              <ImpactStat value="100%" label="Compliance Ambiental" />
+            {/* Articles Card */}
+            <Link href="/artigos" className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm hover:shadow-md transition group">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="h-12 w-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                        <BookOpen size={24} />
+                    </div>
+                    <ArrowRight size={20} className="text-zinc-300 group-hover:text-amber-600 transition" />
+                </div>
+                <h3 className="font-bold text-lg text-zinc-800 mb-1">Conteúdo Educativo</h3>
+                <p className="text-sm text-zinc-500 mb-4">Guias de sustentabilidade</p>
+                <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 bg-zinc-50 px-3 py-1.5 rounded-lg w-fit">
+                    <span className="text-zinc-400">Acessar</span>
+                </div>
+            </Link>
+
+            {/* Analytics Placeholder */}
+            <div className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm flex flex-col justify-center items-center text-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-zinc-50/50 pattern-grid-lg opacity-50" />
+                <div className="relative z-10">
+                    <div className="h-12 w-12 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto mb-3">
+                        <BarChart3 size={24} />
+                    </div>
+                    <h3 className="font-bold text-zinc-800">Relatórios</h3>
+                    <p className="text-sm text-zinc-500 mt-1 max-w-xs mx-auto">
+                        Em breve
+                    </p>
+                </div>
             </div>
-          </div>
-        </section>
+        </div>
 
-        {/* Mensagem */}
-        <section>
-          <div className="text-center">
-            <h3 className="text-xl md:text-2xl font-semibold text-[#2d5016]">Sua empresa está fazendo a diferença!</h3>
-            <p className="text-zinc-600 mt-2 max-w-2xl mx-auto">
-              Continue contribuindo para um futuro mais sustentável com práticas responsáveis de descarte.
-            </p>
-          </div>
-        </section>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-zinc-200 py-8">
-        <div className="container mx-auto max-w-6xl px-4 md:px-6 text-center text-zinc-600 text-sm">
-          © 2025 EcoTrash Empresarial. Todos os direitos reservados.
-        </div>
-      </footer>
     </div>
   );
 }
 
-function HomeCard({ href, title, description, Icon }) {
-  return (
-    <Link
-      href={href}
-      className="group bg-white rounded-2xl shadow-xl border border-zinc-100 p-6 transition transform hover:-translate-y-1 hover:shadow-2xl"
-    >
-      <div className="flex flex-col h-full">
-        <div className="w-12 h-12 rounded-full bg-[linear-gradient(135deg,#48742c_0%,#5d8f3a_100%)] flex items-center justify-center shadow text-white">
-          <Icon size={22} />
-        </div>
-        <h3 className="mt-4 text-[#2d5016] font-semibold">{title}</h3>
-        <p className="mt-1 text-sm text-zinc-600 leading-relaxed">{description}</p>
-      </div>
-    </Link>
-  );
-}
-
-function PillarCard({ title, description, Icon }) {
-  return (
-    <div className="bg-white rounded-2xl shadow-xl border border-zinc-100 p-6">
-      <div className="w-12 h-12 rounded-full bg-emerald-100 text-[#2d5016] flex items-center justify-center">
-        <Icon size={24} />
-      </div>
-      <h4 className="mt-4 text-[#2d5016] font-semibold">{title}</h4>
-      <p className="mt-1 text-sm text-zinc-600 leading-relaxed">{description}</p>
-    </div>
-  );
-}
-
-function ImpactStat({ value, label }) {
-  return (
-    <div className="text-center">
-      <div className="text-2xl md:text-4xl font-bold text-[#2d5016]">{value}</div>
-      <div className="text-xs md:text-sm text-zinc-600 mt-1">{label}</div>
-    </div>
-  );
+function ManagementCard({ href, icon: Icon, title, desc, stat, statLabel, colorClass }) {
+    return (
+        <Link href={href} className="group bg-white p-8 rounded-3xl border border-zinc-100 shadow-sm hover:shadow-md transition flex flex-col h-full">
+            <div className="flex items-start justify-between mb-6">
+                <div className={`h-14 w-14 rounded-2xl flex items-center justify-center ${colorClass}`}>
+                    <Icon size={28} />
+                </div>
+                <div className="text-right">
+                    <span className="block text-3xl font-bold text-zinc-800">{stat}</span>
+                    <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">{statLabel}</span>
+                </div>
+            </div>
+            <div className="mt-auto">
+                <h3 className="text-xl font-bold text-zinc-800 mb-1 group-hover:text-zinc-600 transition">{title}</h3>
+                <p className="text-zinc-500">{desc}</p>
+            </div>
+        </Link>
+    );
 }
