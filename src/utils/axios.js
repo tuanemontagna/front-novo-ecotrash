@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api-ecotrash.onrender.com';
 
 export const api = axios.create({
     baseURL: BASE_URL,

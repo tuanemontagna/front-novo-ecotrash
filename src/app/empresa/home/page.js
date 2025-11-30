@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import api from "@/utils/axios";
-import { MapPin, Truck, Leaf, ArrowRight, Building2, AlertCircle, BarChart3, BookOpen } from "lucide-react";
+import { MapPin, Truck, Leaf, ArrowRight, Building2, AlertCircle, BarChart3, BookOpen, Activity } from "lucide-react";
 
 export default function EmpresaHomePage() {
   const [empresa, setEmpresa] = useState(null);
@@ -45,98 +45,128 @@ export default function EmpresaHomePage() {
     loadData();
   }, []);
 
-  if (loading) return <div className="min-h-screen bg-zinc-50 flex items-center justify-center text-zinc-500">Carregando...</div>;
+  if (loading) return <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center text-zinc-400 font-medium">Carregando painel...</div>;
 
   return (
-    <div className="min-h-screen bg-zinc-50/30 pb-20">
-      <main className="container mx-auto max-w-5xl px-4 py-8 md:py-12">
+    <div className="min-h-screen bg-[#f8fafc] pb-20 relative">
+      {/* Subtle background pattern */}
+      <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#48742c_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none" />
+
+      <main className="w-full px-6 md:px-12 py-10 relative z-10">
         
-        {/* 1. Header / Status */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+        {/* 1. Header / Status - Clean & Professional */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div>
-                <h1 className="text-3xl font-bold text-zinc-800 mb-1">
-                    {empresa ? empresa.nomeFantasia : 'Painel Empresarial'}
-                </h1>
-                <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <span className="text-sm text-zinc-500 font-medium">Sistema Operacional</span>
+                <div className="flex items-center gap-2 text-zinc-400 text-sm font-medium uppercase tracking-wider mb-2">
+                    <Building2 size={16} />
+                    <span>Portal Corporativo</span>
                 </div>
+                <h1 className="text-3xl md:text-4xl font-bold text-zinc-900 tracking-tight">
+                    {empresa ? empresa.nomeFantasia : 'Sua Empresa'}
+                </h1>
             </div>
             
-            {!empresa && (
-                <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-xl flex items-center gap-3 text-sm">
-                    <AlertCircle size={18} />
-                    <span>Complete seu cadastro empresarial para acessar todas as funções.</span>
+            <div className="flex items-center gap-3 bg-white px-4 py-2 shadow-sm border border-zinc-100">
+                <div className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex h-3 w-3 bg-emerald-500"></span>
                 </div>
-            )}
+                <span className="text-sm font-semibold text-zinc-600">Sistema Operacional</span>
+            </div>
         </div>
 
-        {/* 2. Management Grid (Big Cards) */}
+        {!empresa && (
+            <div className="bg-amber-50 border border-amber-100 text-amber-800 px-6 py-4 flex items-center gap-4 text-sm mb-8 shadow-sm">
+                <AlertCircle size={20} className="shrink-0" />
+                <span className="font-medium">Complete seu cadastro empresarial para acessar todas as funções de gestão.</span>
+            </div>
+        )}
+
+        {/* 2. Management Grid - Sharp Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
             <ManagementCard 
                 href="/empresa/pontos-coleta"
                 icon={MapPin}
                 title="Gerenciar Pontos"
-                desc="Adicione ou edite seus pontos de coleta"
+                desc="Controle seus pontos de coleta ativos"
                 stat={stats.pontos}
                 statLabel="Pontos Ativos"
-                colorClass="bg-blue-50 text-blue-600"
+                gradient="from-blue-500 to-indigo-600"
             />
             <ManagementCard 
                 href="/empresa/coletas"
                 icon={Truck}
                 title="Gerenciar Coletas"
-                desc="Acompanhe solicitações e agendamentos"
+                desc="Acompanhe o fluxo de retiradas"
                 stat={stats.coletas}
                 statLabel="Coletas Totais"
-                colorClass="bg-indigo-50 text-indigo-600"
+                gradient="from-emerald-500 to-teal-600"
             />
         </div>
 
         {/* 3. Secondary Actions & Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Campaign Card */}
-            <Link href="/empresa/campanhas" className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm hover:shadow-md transition group">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="h-12 w-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+            <Link href="/empresa/campanhas" className="group bg-white p-8 border border-zinc-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between h-full relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 -mr-8 -mt-8 transition-transform group-hover:scale-110" />
+                
+                <div className="relative z-10">
+                    <div className="h-12 w-12 bg-emerald-100 text-emerald-700 flex items-center justify-center mb-6">
                         <Leaf size={24} />
                     </div>
-                    <ArrowRight size={20} className="text-zinc-300 group-hover:text-emerald-600 transition" />
+                    <h3 className="font-bold text-xl text-zinc-900 mb-2">Campanhas</h3>
+                    <p className="text-zinc-500 text-sm leading-relaxed">Engaje sua marca em ações de impacto real.</p>
                 </div>
-                <h3 className="font-bold text-lg text-zinc-800 mb-1">Campanhas</h3>
-                <p className="text-sm text-zinc-500 mb-4">Participe de ações sustentáveis</p>
-                <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 bg-zinc-50 px-3 py-1.5 rounded-lg w-fit">
-                    <span>{stats.campanhas}</span>
-                    <span className="text-zinc-400">Ativas</span>
+                
+                <div className="mt-8 flex items-center justify-between">
+                    <span className="text-2xl font-bold text-zinc-900">{stats.campanhas} <span className="text-sm font-normal text-zinc-400">ativas</span></span>
+                    <div className="h-10 w-10 border border-zinc-100 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                        <ArrowRight size={18} />
+                    </div>
                 </div>
             </Link>
 
             {/* Articles Card */}
-            <Link href="/artigos" className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm hover:shadow-md transition group">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="h-12 w-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+            <Link href="/artigos" className="group bg-white p-8 border border-zinc-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between h-full relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50 -mr-8 -mt-8 transition-transform group-hover:scale-110" />
+                
+                <div className="relative z-10">
+                    <div className="h-12 w-12 bg-amber-100 text-amber-700 flex items-center justify-center mb-6">
                         <BookOpen size={24} />
                     </div>
-                    <ArrowRight size={20} className="text-zinc-300 group-hover:text-amber-600 transition" />
+                    <h3 className="font-bold text-xl text-zinc-900 mb-2">Educação</h3>
+                    <p className="text-zinc-500 text-sm leading-relaxed">Guias de compliance e sustentabilidade.</p>
                 </div>
-                <h3 className="font-bold text-lg text-zinc-800 mb-1">Conteúdo Educativo</h3>
-                <p className="text-sm text-zinc-500 mb-4">Guias de sustentabilidade</p>
-                <div className="flex items-center gap-2 text-sm font-medium text-zinc-700 bg-zinc-50 px-3 py-1.5 rounded-lg w-fit">
-                    <span className="text-zinc-400">Acessar</span>
+                
+                <div className="mt-8 flex items-center justify-end">
+                    <div className="h-10 w-10 border border-zinc-100 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                        <ArrowRight size={18} />
+                    </div>
                 </div>
             </Link>
 
-            {/* Analytics Placeholder */}
-            <div className="bg-white p-6 rounded-3xl border border-zinc-100 shadow-sm flex flex-col justify-center items-center text-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-zinc-50/50 pattern-grid-lg opacity-50" />
+            {/* Analytics Placeholder - Dark Mode Contrast */}
+            <div className="bg-[#18181b] p-8 shadow-lg flex flex-col justify-between relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900" />
+                <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/50 to-transparent" />
+                
                 <div className="relative z-10">
-                    <div className="h-12 w-12 rounded-full bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto mb-3">
-                        <BarChart3 size={24} />
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="h-12 w-12 bg-zinc-800 text-zinc-400 flex items-center justify-center border border-zinc-700">
+                            <Activity size={24} />
+                        </div>
+                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider border border-zinc-700 px-2 py-1">Em Breve</span>
                     </div>
-                    <h3 className="font-bold text-zinc-800">Relatórios</h3>
-                    <p className="text-sm text-zinc-500 mt-1 max-w-xs mx-auto">
-                        Em breve
-                    </p>
+                    <h3 className="font-bold text-xl text-white mb-2">Relatórios ESG</h3>
+                    <p className="text-zinc-400 text-sm">Métricas detalhadas de impacto ambiental.</p>
+                </div>
+
+                <div className="relative z-10 mt-6 h-16 flex items-end gap-1 opacity-30">
+                    <div className="w-1/5 h-[40%] bg-zinc-500" />
+                    <div className="w-1/5 h-[70%] bg-zinc-500" />
+                    <div className="w-1/5 h-[50%] bg-zinc-500" />
+                    <div className="w-1/5 h-[90%] bg-zinc-500" />
+                    <div className="w-1/5 h-[60%] bg-zinc-500" />
                 </div>
             </div>
         </div>
@@ -146,22 +176,30 @@ export default function EmpresaHomePage() {
   );
 }
 
-function ManagementCard({ href, icon: Icon, title, desc, stat, statLabel, colorClass }) {
+function ManagementCard({ href, icon: Icon, title, desc, stat, statLabel, gradient }) {
     return (
-        <Link href={href} className="group bg-white p-8 rounded-3xl border border-zinc-100 shadow-sm hover:shadow-md transition flex flex-col h-full">
-            <div className="flex items-start justify-between mb-6">
-                <div className={`h-14 w-14 rounded-2xl flex items-center justify-center ${colorClass}`}>
-                    <Icon size={28} />
+        <Link href={href} className="group relative bg-white p-8 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 overflow-hidden border border-zinc-100">
+            {/* Gradient Background on Hover */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+            
+            <div className="relative z-10 flex flex-col h-full justify-between">
+                <div className="flex items-start justify-between mb-8">
+                    <div className={`h-16 w-16 bg-zinc-50 group-hover:bg-white/20 group-hover:backdrop-blur-sm flex items-center justify-center text-zinc-700 group-hover:text-white transition-all duration-500 shadow-sm`}>
+                        <Icon size={32} />
+                    </div>
+                    <div className="text-right">
+                        <span className="block text-4xl font-bold text-zinc-900 group-hover:text-white transition-colors duration-500">{stat}</span>
+                        <span className="text-xs font-bold text-zinc-400 group-hover:text-white/80 uppercase tracking-wider transition-colors duration-500">{statLabel}</span>
+                    </div>
                 </div>
-                <div className="text-right">
-                    <span className="block text-3xl font-bold text-zinc-800">{stat}</span>
-                    <span className="text-xs font-medium text-zinc-500 uppercase tracking-wide">{statLabel}</span>
+                
+                <div>
+                    <h3 className="text-2xl font-bold text-zinc-900 group-hover:text-white mb-2 transition-colors duration-500">{title}</h3>
+                    <p className="text-zinc-500 group-hover:text-white/90 font-medium transition-colors duration-500">{desc}</p>
                 </div>
-            </div>
-            <div className="mt-auto">
-                <h3 className="text-xl font-bold text-zinc-800 mb-1 group-hover:text-zinc-600 transition">{title}</h3>
-                <p className="text-zinc-500">{desc}</p>
             </div>
         </Link>
     );
 }
+
+

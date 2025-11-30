@@ -291,11 +291,21 @@ export default function RecompensasPage() {
                       {disponivel ? "Disponível" : "Esgotado"}
                     </div>
 
-                    {/* Banner simples (sem imagens do parceiro no backend) */}
-                    <div className="h-40 w-full bg-gradient-to-br from-emerald-200/60 to-emerald-100/40 flex items-center justify-center">
-                      <span className="text-emerald-800 font-semibold text-sm">
-                        {v.nomeParceiro || "Parceiro"}
-                      </span>
+                    {/* Banner com imagem ou placeholder */}
+                    <div className="h-40 w-full bg-zinc-100 relative flex items-center justify-center overflow-hidden">
+                      {v.imagem ? (
+                        <img 
+                          src={`${process.env.NEXT_PUBLIC_API_URL || 'https://api-ecotrash.onrender.com'}${v.imagem}`} 
+                          alt={v.titulo}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-emerald-200/60 to-emerald-100/40 flex items-center justify-center">
+                            <span className="text-emerald-800 font-semibold text-sm">
+                                {v.nomeParceiro || "Parceiro"}
+                            </span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="p-6 space-y-4">

@@ -31,6 +31,9 @@ export default function Header({ maxWidthClass = "max-w-6xl", showSidebarToggle 
             </button>
           )}
           <Link href="/" className="flex items-center gap-3">
+          <div className="relative h-12 w-12">
+            <Image src="/images/logo.png" alt="Logo" fill className="object-contain" />
+          </div>
           <div className="relative h-7 w-[140px]">
             <Image src="/images/ecotrash.png" alt="EcoTrash" fill className="object-contain invert-0 brightness-200" />
           </div>

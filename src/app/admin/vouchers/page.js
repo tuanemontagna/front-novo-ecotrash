@@ -14,16 +14,16 @@ export default function AdminVouchersPage() {
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [confirmDel, setConfirmDel] = useState(null);
-  const [form, setForm] = useState({ nomeParceiro: "", titulo: "", descricao: "", custoPontos: 0, validade: "", quantidadeDisponivel: null });
+  const [form, setForm] = useState({ nomeParceiro: "", titulo: "", descricao: "", custoPontos: 0, validade: "", quantidadeDisponivel: null, imagem: null });
 
   function openCreate() {
     setEditing(null);
-    setForm({ nomeParceiro: "", titulo: "", descricao: "", custoPontos: 0, validade: "", quantidadeDisponivel: null });
+    setForm({ nomeParceiro: "", titulo: "", descricao: "", custoPontos: 0, validade: "", quantidadeDisponivel: null, imagem: null });
     setModalOpen(true);
   }
   function openEdit(v) {
     setEditing(v);
-    setForm({ nomeParceiro: v.nomeParceiro||"", titulo: v.titulo||"", descricao: v.descricao||"", custoPontos: v.custoPontos||0, validade: v.validade||"", quantidadeDisponivel: v.quantidadeDisponivel });
+    setForm({ nomeParceiro: v.nomeParceiro||"", titulo: v.titulo||"", descricao: v.descricao||"", custoPontos: v.custoPontos||0, validade: v.validade||"", quantidadeDisponivel: v.quantidadeDisponivel, imagem: null });
     setModalOpen(true);
   }
   async function load() {
@@ -39,12 +39,29 @@ export default function AdminVouchersPage() {
     e?.preventDefault?.();
     try {
       setSaving(true); setError(""); setSuccess("");
-      const payload = { ...form, custoPontos: Number(form.custoPontos), quantidadeDisponivel: form.quantidadeDisponivel===''? null : (form.quantidadeDisponivel==null? null : Number(form.quantidadeDisponivel)) };
+      
+      const formData = new FormData();
+      formData.append('nomeParceiro', form.nomeParceiro);
+      formData.append('titulo', form.titulo);
+      formData.append('descricao', form.descricao);
+      formData.append('custoPontos', Number(form.custoPontos));
+      if (form.validade) formData.append('validade', form.validade);
+      if (form.quantidadeDisponivel !== null && form.quantidadeDisponivel !== '') {
+          formData.append('quantidadeDisponivel', Number(form.quantidadeDisponivel));
+      }
+      if (form.imagem) {
+          formData.append('imagem', form.imagem);
+      }
+
       if (editing) {
-        await api.patch(`/vouchers/${editing.id}`, payload);
+        await api.patch(`/vouchers/${editing.id}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
         setSuccess('Voucher atualizado.');
       } else {
-        await api.post('/vouchers', payload);
+        await api.post('/vouchers', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
         setSuccess('Voucher criado.');
       }
       setModalOpen(false);
@@ -144,6 +161,13 @@ export default function AdminVouchersPage() {
               <input type="number" value={form.quantidadeDisponivel ?? ''} onChange={e=>{
                 const v = e.target.value; setForm(f=>({...f, quantidadeDisponivel: v===''? null : Number(v)}));
               }} className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm" />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-[#2d5016] mb-1">Imagem do Voucher</label>
+              <input type="file" accept="image/*" onChange={e => setForm(f => ({ ...f, imagem: e.target.files[0] }))} className="w-full border border-zinc-300 rounded-lg px-3 py-2 text-sm" />
+              {editing && editing.imagem && !form.imagem && (
+                  <p className="text-xs text-zinc-500 mt-1">Imagem atual cadastrada.</p>
+              )}
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">

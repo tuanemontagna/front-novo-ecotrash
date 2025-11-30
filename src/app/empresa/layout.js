@@ -17,7 +17,7 @@ export default function EmpresaSectionLayout({ children }) {
         sidebarOpen={sidebarOpen} 
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         className={`transition-all duration-300 right-0 ${!isHome && sidebarOpen ? 'left-64' : 'left-0'}`}
-        maxWidthClass={!isHome && sidebarOpen ? "max-w-full" : "max-w-6xl"}
+        maxWidthClass={isHome ? "max-w-full px-6 md:px-12" : (sidebarOpen ? "max-w-full" : "max-w-6xl")}
       />
       
       {!isHome && (
@@ -26,8 +26,8 @@ export default function EmpresaSectionLayout({ children }) {
 
       <main 
         className={`
-          pt-24 px-4 pb-8 mx-auto transition-all duration-300
-          ${isHome ? "max-w-6xl" : (sidebarOpen ? "ml-64 max-w-[calc(100vw-16rem)]" : "max-w-6xl")}
+          pt-24 pb-8 mx-auto transition-all duration-300
+          ${isHome ? "w-full max-w-none px-0" : (sidebarOpen ? "ml-64 px-4 max-w-[calc(100vw-16rem)]" : "max-w-6xl px-4")}
         `}
       >
         {children}

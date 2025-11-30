@@ -1,42 +1,32 @@
 "use client";
 
-import AdminSidebar from "./_components/sidebar";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import AdminSidebar from "./_components/sidebar";
 import Header from "@/components/header";
-// Acesso restrito temporariamente desativado
+
 export default function AdminLayout({ children }) {
-  const [open, setOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
   return (
-    <div className="min-h-screen flex bg-white">
-      {/* Sidebar (desktop collapsible) */}
-      <div className={`hidden md:block transition-all duration-300 ${open? 'w-64':'w-0'} overflow-hidden pt-28`}>
-        {open && <AdminSidebar />}
-      </div>
-      {/* Mobile sidebar overlay */}
-      {open && (
-        <div className="md:hidden fixed inset-x-0 top-16 bottom-0 z-40 flex">
-          <div className="w-64 bg-white border-r border-zinc-200 shadow-xl">
-            <AdminSidebar />
-          </div>
-          <div onClick={()=>setOpen(false)} className="flex-1 bg-black/40" />
-        </div>
-      )}
-      {/* Content */}
-      <div className="flex-1 min-w-0 flex flex-col">
-        {/* Shared Header Wrapper */}
-        <div className="relative z-30">
-          <Header
-            maxWidthClass="max-w-7xl"
-            showSidebarToggle
-            sidebarOpen={open}
-            onToggleSidebar={() => setOpen(o=>!o)}
-          />
-        </div>
-        <main className="pt-24 md:pt-28 p-4 md:p-6 max-w-7xl w-full mx-auto flex-1 min-h-0">
-          {children}
-        </main>
-      </div>
+    <div className="min-h-screen bg-zinc-50">
+      <Header 
+        showSidebarToggle={true} 
+        sidebarOpen={sidebarOpen} 
+        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        className={`transition-all duration-300 right-0 ${sidebarOpen ? 'left-64' : 'left-0'}`}
+        maxWidthClass={sidebarOpen ? "max-w-full" : "max-w-6xl"}
+      />
+      
+      <AdminSidebar open={sidebarOpen} />
+
+      <main 
+        className={`
+          pt-24 px-4 pb-8 mx-auto transition-all duration-300
+          ${sidebarOpen ? "ml-64 max-w-[calc(100vw-16rem)]" : "max-w-6xl"}
+        `}
+      >
+        {children}
+      </main>
     </div>
   );
 }
