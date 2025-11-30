@@ -4,7 +4,7 @@ COPY ./package.json ./
 COPY ./next.config.mjs ./
 COPY ./src ./src
 COPY ./public ./public
-COPY ./postcss.config.cjs ./
+COPY ./postcss.config.mjs ./
 COPY ./jsconfig.json ./
 
 RUN npm install
