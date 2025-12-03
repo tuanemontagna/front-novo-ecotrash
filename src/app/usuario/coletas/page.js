@@ -304,7 +304,7 @@ export default function ColetasUsuarioPage() {
                         <div key={t.id} className={`flex items-center justify-between border rounded-lg px-3 py-2 ${selected ? 'border-emerald-400 bg-emerald-50' : 'border-zinc-200'}`}>
                           <label className="flex items-center gap-2 text-sm">
                             <input type="checkbox" checked={selected} onChange={() => toggleItem(t.id)} />
-                            <span>{t.nome}</span>
+                            <span className="text-[#2d5016]">{t.nome}</span>
                           </label>
                           {selected && (
                             <input type="number" min={1} value={form.itens[t.id]} onChange={(e) => setItemQuantidade(t.id, e.target.value)} className="w-16 border rounded px-2 py-1 text-sm" />
@@ -320,7 +320,7 @@ export default function ColetasUsuarioPage() {
                 </div>
               </div>
               <div className="flex justify-end gap-3 mt-6">
-                <button type="button" onClick={toggleForm} className="px-4 py-2 rounded border border-zinc-300 text-sm">Cancelar</button>
+                <button type="button" onClick={toggleForm} className="px-4 py-2 rounded border border-zinc-300 text-sm text-[#2d5016]">Cancelar</button>
                 <button type="button" disabled={submitting} onClick={submitAgendamento} className={`px-4 py-2 rounded text-sm font-semibold ${submitting ? 'bg-zinc-300 text-white' : 'bg-[linear-gradient(135deg,#48742c_0%,#5d8f3a_100%)] text-white'}`}>
                   {submitting ? 'Enviando...' : 'Agendar Coleta'}
                 </button>
