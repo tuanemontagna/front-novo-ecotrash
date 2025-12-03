@@ -66,13 +66,7 @@ export default function EmpresaHomePage() {
                 </h1>
             </div>
             
-            <div className="flex items-center gap-3 bg-white px-4 py-2 shadow-sm border border-zinc-100">
-                <div className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex h-3 w-3 bg-emerald-500"></span>
-                </div>
-                <span className="text-sm font-semibold text-zinc-600">Sistema Operacional</span>
-            </div>
+
         </div>
 
         {!empresa && (
@@ -105,7 +99,7 @@ export default function EmpresaHomePage() {
         </div>
 
         {/* 3. Secondary Actions & Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Campaign Card */}
             <Link href="/empresa/campanhas" className="group bg-white p-8 border border-zinc-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between h-full relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 -mr-8 -mt-8 transition-transform group-hover:scale-110" />
@@ -144,31 +138,6 @@ export default function EmpresaHomePage() {
                     </div>
                 </div>
             </Link>
-
-            {/* Analytics Placeholder - Dark Mode Contrast */}
-            <div className="bg-[#18181b] p-8 shadow-lg flex flex-col justify-between relative overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-900" />
-                <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/50 to-transparent" />
-                
-                <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="h-12 w-12 bg-zinc-800 text-zinc-400 flex items-center justify-center border border-zinc-700">
-                            <Activity size={24} />
-                        </div>
-                        <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider border border-zinc-700 px-2 py-1">Em Breve</span>
-                    </div>
-                    <h3 className="font-bold text-xl text-white mb-2">Relatórios ESG</h3>
-                    <p className="text-zinc-400 text-sm">Métricas detalhadas de impacto ambiental.</p>
-                </div>
-
-                <div className="relative z-10 mt-6 h-16 flex items-end gap-1 opacity-30">
-                    <div className="w-1/5 h-[40%] bg-zinc-500" />
-                    <div className="w-1/5 h-[70%] bg-zinc-500" />
-                    <div className="w-1/5 h-[50%] bg-zinc-500" />
-                    <div className="w-1/5 h-[90%] bg-zinc-500" />
-                    <div className="w-1/5 h-[60%] bg-zinc-500" />
-                </div>
-            </div>
         </div>
 
       </main>

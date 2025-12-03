@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import api from "@/utils/axios";
+import api, { fetchMe } from "@/utils/axios";
 import { MapPin, Award, Leaf, ArrowRight, History, Plus, Calendar, Recycle, BookOpen, Sparkles } from "lucide-react";
 
 export default function UsuarioHomePage() {
@@ -20,12 +20,43 @@ export default function UsuarioHomePage() {
 
     async function loadData() {
       try {
-        const meRes = await api.get('/usuarios/me');
-        const userData = meRes.data.data;
+        // Tenta usar fetchMe (/auth/me) primeiro, fallback para /usuarios/me se necessário
+        let userData;
+        try {
+            userData = await fetchMe();
+        } catch (e) {
+            const meRes = await api.get('/usuarios/me');
+            userData = meRes.data.data;
+        }
+        
         setUser(userData);
 
+        // Garante que temos os dados mais recentes do usuário
         try {
-            const coletasRes = await api.get(`/usuarios/${userData.id}/coletas`);
+            const fullUserRes = await api.get(`/usuarios/${userData.id}`);
+            if (fullUserRes.data?.data) {
+                userData = fullUserRes.data.data;
+                setUser(userData);
+            }
+        } catch (e) {
+            console.error("Erro ao atualizar dados do usuário", e);
+        }
+
+        // Busca saldo de pontos atualizado
+        try {
+            const saldoRes = await api.get(`/usuarios/${userData.id}/saldo`);
+            if (saldoRes.data && typeof saldoRes.data.saldo === 'number') {
+                setStats(prev => ({ ...prev, points: saldoRes.data.saldo }));
+            } else {
+                 setStats(prev => ({ ...prev, points: userData.pontos || 0 }));
+            }
+        } catch (e) {
+             console.error("Erro ao carregar saldo", e);
+             setStats(prev => ({ ...prev, points: userData.pontos || 0 }));
+        }
+
+        try {
+            const coletasRes = await api.get(`/usuarios/${userData.id}/agendamentos`);
             const coletas = Array.isArray(coletasRes.data.data) ? coletasRes.data.data : [];
             setRecentColetas(coletas.slice(0, 5));
             setStats(prev => ({ ...prev, coletas: coletas.length }));
@@ -37,7 +68,7 @@ export default function UsuarioHomePage() {
             setStats(prev => ({ ...prev, campanhas: camps.length }));
         } catch {}
         
-        setStats(prev => ({ ...prev, points: userData.pontos || 0 }));
+        // setStats(prev => ({ ...prev, points: userData.pontos || 0 })); // Já setado pelo saldo
 
       } catch (e) {
         console.error("Erro ao carregar dashboard", e);
@@ -85,7 +116,7 @@ export default function UsuarioHomePage() {
                 </div>
 
                 <Link 
-                    href="/usuario/coletas/nova" 
+                    href="/usuario/coletas/" 
                     className="group/btn relative overflow-hidden bg-white text-[#1a3b10] px-8 py-4 font-bold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex items-center gap-3"
                 >
                     <span className="relative z-10 flex items-center gap-2">

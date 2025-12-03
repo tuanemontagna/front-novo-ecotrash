@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Header from "@/components/header";
 import api from "@/utils/axios";
 import Link from "next/link";
-import { Truck, Calendar, Clock, MapPin, Users, CheckCircle, XCircle, Hourglass } from "lucide-react";
+import { Truck, Calendar, Clock, MapPin, Users, CheckCircle, XCircle, Hourglass, RefreshCw } from "lucide-react";
 
 function formatBR(dateStr) {
   if (!dateStr) return "-";
@@ -79,13 +79,30 @@ export default function EmpresaColetasPage() {
   }, []);
 
   // helper to refresh list
-  async function refreshList() {
+  const refreshList = useCallback(async (silent = false) => {
     if (!empresaId) return;
+    if (!silent) setLoading(true);
     try {
       const res = await api.get(`/empresas/${empresaId}/agendamentos`);
       setAgendamentos(Array.isArray(res?.data?.data) ? res.data.data : []);
-    } catch {}
-  }
+    } catch (e) {
+      console.error("Erro ao atualizar lista:", e);
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, [empresaId]);
+
+  useEffect(() => {
+    if (!empresaId) return;
+    // avoid double fetch on mount if possible, or just silent refresh
+    // The main load() handles the initial loading state.
+    
+    function onFocus() {
+        refreshList(true); // silent refresh on focus
+    }
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [empresaId, refreshList]);
 
   function statusBadge(status) {
     const s = (status || '').toUpperCase();
@@ -103,7 +120,7 @@ export default function EmpresaColetasPage() {
       setError(""); setSuccess("");
       await api.patch(`/agendamentos/${id}/status`, { status, ...extra });
       setSuccess('Status atualizado.');
-      await refreshList();
+      await refreshList(false);
     } catch (e) {
       setError(e?.response?.data?.message || 'Falha ao atualizar status.');
     } finally {
@@ -121,9 +138,14 @@ export default function EmpresaColetasPage() {
     <div className="min-h-screen bg-white flex flex-col">
       
       <main className="container mx-auto max-w-6xl w-full px-4 md:px-6 pt-0 pb-16 flex-1">
-        <div className="mb-6">
-          <h1 className="text-[color:#2d5016] text-2xl md:text-3xl font-semibold">Gestão de Coletas (Empresa)</h1>
-          <p className="text-zinc-600 mt-1 text-sm">Gerencie coletas recebidas, aprove solicitações e registre conclusão.</p>
+        <div className="mb-6 flex items-end justify-between">
+          <div>
+            <h1 className="text-[color:#2d5016] text-2xl md:text-3xl font-semibold">Gestão de Coletas (Empresa)</h1>
+            <p className="text-zinc-600 mt-1 text-sm">Gerencie coletas recebidas, aprove solicitações e registre conclusão.</p>
+          </div>
+          <button onClick={() => refreshList(false)} className="flex items-center gap-2 text-sm text-[#48742c] hover:underline">
+            <RefreshCw size={16} className={loading ? "animate-spin" : ""} /> Atualizar
+          </button>
         </div>
 
         {(error || success) && (

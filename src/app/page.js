@@ -221,7 +221,7 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
               {[
                 {
                   icon: Building2,
@@ -236,13 +236,9 @@ export default function LandingPage() {
                 {
                   icon: QrCode,
                   title: "Validação Simplificada",
-                  desc: "Sistema de códigos diários e QR Codes para validar entregas e recompensas com segurança."
+                  desc: "Sistema de códigos diários para validar entregas e recompensas com segurança."
                 },
-                {
-                  icon: BarChart3,
-                  title: "Relatórios de Impacto",
-                  desc: "Acompanhe métricas de coleta e o impacto ambiental gerado pela sua empresa em tempo real."
-                }
+
               ].map((item, i) => (
                 <div key={i} className="bg-white border border-zinc-200 p-6 rounded-2xl hover:shadow-lg transition-all shadow-sm">
                   <div className="h-12 w-12 rounded-xl bg-green-50 text-[#48742c] flex items-center justify-center mb-4">
