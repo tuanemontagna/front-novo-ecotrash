@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api-ecotrash.onrender.com';
-// const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
+// const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api-ecotrash.onrender.com';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3334';
 
 export const api = axios.create({
     baseURL: BASE_URL,
@@ -18,7 +18,18 @@ api.interceptors.request.use(
         }
         return config;
     },
+    (error) => Promise.reject(error)
+);
+
+api.interceptors.response.use(
+    (response) => response,
     (error) => {
+        if (error?.response?.status === 401 && typeof window !== 'undefined') {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
         return Promise.reject(error);
     }
 );

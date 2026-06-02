@@ -23,6 +23,7 @@ const ESTILO_TOOLTIP   = {
   padding: "8px 14px",
 };
 
+
 // ─── HOOK GENÉRICO ────────────────────────────────────────────────────────────
 
 function useDashboard(endpoint, filtros) {
@@ -86,7 +87,11 @@ function Selecionar({ valor, aoMudar, opcoes, placeholder = "Todos" }) {
       className="text-xs px-3 py-1.5 rounded-lg border border-[#d4e6b8] bg-[#f7faf2] text-[#2d5016] outline-none cursor-pointer"
     >
       <option value="">{placeholder}</option>
-      {opcoes.map(op => <option key={op} value={op}>{op}</option>)}
+      {opcoes.map(op => {
+        const v = typeof op === "object" ? op.value : op;
+        const l = typeof op === "object" ? op.label : op;
+        return <option key={v} value={v}>{l}</option>;
+      })}
     </select>
   );
 }
@@ -160,18 +165,14 @@ function EstadoGrafico({ carregando, erro, vazio, altura = 220 }) {
 
 // ─── SEÇÃO: TOTAIS KG / M³ ────────────────────────────────────────────────────
 
-function SecaoTotais() {
-  const [dataInicio,    setDataInicio]    = useState("2024-01-01");
-  const [dataFim,       setDataFim]       = useState("2024-12-31");
-  const [empresa,       setEmpresa]       = useState("");
-  const [bairro,        setBairro]        = useState("");
-  const [tipoResiduo,   setTipoResiduo]   = useState("");
+function SecaoTotais({ tiposResiduos }) {
+  const [dataInicio,  setDataInicio]  = useState("");
+  const [dataFim,     setDataFim]     = useState("");
+  const [tipoResiduo, setTipoResiduo] = useState("");
 
   const { dados, carregando, erro } = useDashboard("/dashboard/totais-coleta", {
     data_inicio:  dataInicio,
     data_fim:     dataFim,
-    empresa_id:   empresa,
-    bairro,
     tipo_residuo: tipoResiduo,
     status:       "CONCLUIDO",
   });
@@ -184,14 +185,8 @@ function SecaoTotais() {
       <BarraFiltros>
         <EntradaData rotulo="De"  valor={dataInicio} aoMudar={setDataInicio} />
         <EntradaData rotulo="Até" valor={dataFim}    aoMudar={setDataFim} />
-        <GrupoFiltro rotulo="Empresa">
-          <Selecionar valor={empresa} aoMudar={setEmpresa} opcoes={[]} placeholder="Todas as empresas" />
-        </GrupoFiltro>
-        <GrupoFiltro rotulo="Bairro">
-          <Selecionar valor={bairro} aoMudar={setBairro} opcoes={[]} placeholder="Todos os bairros" />
-        </GrupoFiltro>
         <GrupoFiltro rotulo="Tipo de Resíduo">
-          <Selecionar valor={tipoResiduo} aoMudar={setTipoResiduo} opcoes={[]} placeholder="Todos os tipos" />
+          <Selecionar valor={tipoResiduo} aoMudar={setTipoResiduo} opcoes={tiposResiduos} placeholder="Todos os tipos" />
         </GrupoFiltro>
       </BarraFiltros>
 
@@ -223,8 +218,8 @@ function SecaoTotais() {
 // ─── SEÇÃO: BAIRROS ───────────────────────────────────────────────────────────
 
 function SecaoBairros() {
-  const [dataInicio, setDataInicio] = useState("2024-01-01");
-  const [dataFim,    setDataFim]    = useState("2024-12-31");
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim,    setDataFim]    = useState("");
   const [status,     setStatus]     = useState("");
 
   const { dados: retorno, carregando, erro } = useDashboard("/dashboard/descartes-por-bairro", {
@@ -233,7 +228,9 @@ function SecaoBairros() {
     status,
   });
 
-  const lista = Array.isArray(retorno) ? retorno.slice(0, 8) : [];
+  const lista = Array.isArray(retorno)
+    ? retorno.slice(0, 8).map(item => ({ ...item, total_coletas: Number(item.total_coletas) }))
+    : [];
   const vazio  = !carregando && !erro && lista.length === 0;
 
   return (
@@ -289,9 +286,9 @@ function SecaoBairros() {
 
 // ─── SEÇÃO: RESÍDUOS ──────────────────────────────────────────────────────────
 
-function SecaoResiduos() {
-  const [dataInicio, setDataInicio] = useState("2024-01-01");
-  const [dataFim,    setDataFim]    = useState("2024-12-31");
+function SecaoResiduos({ empresas, bairros, tiposResiduos }) {
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim,    setDataFim]    = useState("");
   const [status,     setStatus]     = useState("CONCLUIDO");
   const [empresa,    setEmpresa]    = useState("");
   const [bairro,     setBairro]     = useState("");
@@ -304,7 +301,9 @@ function SecaoResiduos() {
     bairro,
   });
 
-  const lista = Array.isArray(retorno) ? retorno.slice(0, 8) : [];
+  const lista = Array.isArray(retorno)
+    ? retorno.slice(0, 8).map(item => ({ ...item, quantidade_total: Number(item.quantidade_total) }))
+    : [];
   const vazio  = !carregando && !erro && lista.length === 0;
 
   return (
@@ -317,10 +316,10 @@ function SecaoResiduos() {
           <Selecionar valor={status} aoMudar={setStatus} opcoes={OPCOES_STATUS} />
         </GrupoFiltro>
         <GrupoFiltro rotulo="Empresa">
-          <Selecionar valor={empresa} aoMudar={setEmpresa} opcoes={[]} placeholder="Todas as empresas" />
+          <Selecionar valor={empresa} aoMudar={setEmpresa} opcoes={empresas} placeholder="Todas as empresas" />
         </GrupoFiltro>
         <GrupoFiltro rotulo="Bairro">
-          <Selecionar valor={bairro} aoMudar={setBairro} opcoes={[]} placeholder="Todos os bairros" />
+          <Selecionar valor={bairro} aoMudar={setBairro} opcoes={bairros} placeholder="Todos os bairros" />
         </GrupoFiltro>
       </BarraFiltros>
       {(carregando || erro || vazio) ? (
@@ -343,14 +342,12 @@ function SecaoResiduos() {
 // ─── SEÇÃO: VOUCHERS ──────────────────────────────────────────────────────────
 
 function SecaoVouchers() {
-  const [dataInicio,  setDataInicio]  = useState("2024-01-01");
-  const [dataFim,     setDataFim]     = useState("2024-12-31");
-  const [tipoVoucher, setTipoVoucher] = useState("");
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim,    setDataFim]    = useState("");
 
   const { dados: retorno, carregando, erro } = useDashboard("/dashboard/top-vouchers", {
-    data_inicio:  dataInicio,
-    data_fim:     dataFim,
-    tipo_voucher: tipoVoucher,
+    data_inicio: dataInicio,
+    data_fim:    dataFim,
   });
 
   const lista = Array.isArray(retorno) ? retorno : [];
@@ -362,9 +359,6 @@ function SecaoVouchers() {
       <BarraFiltros>
         <EntradaData rotulo="De"  valor={dataInicio} aoMudar={setDataInicio} />
         <EntradaData rotulo="Até" valor={dataFim}    aoMudar={setDataFim} />
-        <GrupoFiltro rotulo="Tipo de Voucher">
-          <Selecionar valor={tipoVoucher} aoMudar={setTipoVoucher} opcoes={[]} placeholder="Todos os tipos" />
-        </GrupoFiltro>
       </BarraFiltros>
       {(carregando || erro || vazio) ? (
         <EstadoGrafico carregando={carregando} erro={erro} vazio={vazio} />
@@ -385,9 +379,9 @@ function SecaoVouchers() {
 
 // ─── SEÇÃO: EMPRESAS ──────────────────────────────────────────────────────────
 
-function SecaoEmpresas() {
-  const [dataInicio, setDataInicio] = useState("2024-01-01");
-  const [dataFim,    setDataFim]    = useState("2024-12-31");
+function SecaoEmpresas({ bairros }) {
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim,    setDataFim]    = useState("");
   const [bairro,     setBairro]     = useState("");
   const [status,     setStatus]     = useState("CONCLUIDO");
 
@@ -408,7 +402,7 @@ function SecaoEmpresas() {
         <EntradaData rotulo="De"  valor={dataInicio} aoMudar={setDataInicio} />
         <EntradaData rotulo="Até" valor={dataFim}    aoMudar={setDataFim} />
         <GrupoFiltro rotulo="Bairro">
-          <Selecionar valor={bairro} aoMudar={setBairro} opcoes={[]} placeholder="Todos os bairros" />
+          <Selecionar valor={bairro} aoMudar={setBairro} opcoes={bairros} placeholder="Todos os bairros" />
         </GrupoFiltro>
         <GrupoFiltro rotulo="Status">
           <Selecionar valor={status} aoMudar={setStatus} opcoes={OPCOES_STATUS} />
@@ -433,9 +427,9 @@ function SecaoEmpresas() {
 
 // ─── SEÇÃO: PONTOS DE COLETA ──────────────────────────────────────────────────
 
-function SecaoPontos() {
-  const [dataInicio, setDataInicio] = useState("2024-01-01");
-  const [dataFim,    setDataFim]    = useState("2024-12-31");
+function SecaoPontos({ bairros, pontosColeta }) {
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim,    setDataFim]    = useState("");
   const [bairro,     setBairro]     = useState("");
   const [ponto,      setPonto]      = useState("");
 
@@ -456,10 +450,10 @@ function SecaoPontos() {
         <EntradaData rotulo="De"  valor={dataInicio} aoMudar={setDataInicio} />
         <EntradaData rotulo="Até" valor={dataFim}    aoMudar={setDataFim} />
         <GrupoFiltro rotulo="Bairro">
-          <Selecionar valor={bairro} aoMudar={setBairro} opcoes={[]} placeholder="Todos os bairros" />
+          <Selecionar valor={bairro} aoMudar={setBairro} opcoes={bairros} placeholder="Todos os bairros" />
         </GrupoFiltro>
         <GrupoFiltro rotulo="Ponto de Coleta">
-          <Selecionar valor={ponto} aoMudar={setPonto} opcoes={[]} placeholder="Todos os pontos" />
+          <Selecionar valor={ponto} aoMudar={setPonto} opcoes={pontosColeta} placeholder="Todos os pontos" />
         </GrupoFiltro>
       </BarraFiltros>
       {(carregando || erro || vazio) ? (
@@ -482,18 +476,31 @@ function SecaoPontos() {
 // ─── ROOT ─────────────────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
+  const [opcoes, setOpcoes] = useState({
+    bairros: [], empresas: [], tiposResiduos: [], pontosColeta: [],
+  });
+
+  useEffect(() => {
+    api.get("/dashboard/opcoes-filtros")
+      .then(r => {
+        const d = r?.data?.data;
+        if (d) setOpcoes(d);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#f7faf2] px-4 py-8 md:px-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-[#2d5016] tracking-tight">Dashboard</h1>
         <p className="text-zinc-500 text-sm mt-1">Visão geral das operações do EcoTrash</p>
       </div>
-      <SecaoTotais />
+      <SecaoTotais tiposResiduos={opcoes.tiposResiduos} />
       <SecaoBairros />
-      <SecaoResiduos />
+      <SecaoResiduos empresas={opcoes.empresas} bairros={opcoes.bairros} tiposResiduos={opcoes.tiposResiduos} />
       <SecaoVouchers />
-      <SecaoEmpresas />
-      <SecaoPontos />
+      <SecaoEmpresas bairros={opcoes.bairros} />
+      <SecaoPontos   bairros={opcoes.bairros} pontosColeta={opcoes.pontosColeta} />
     </div>
   );
 }
